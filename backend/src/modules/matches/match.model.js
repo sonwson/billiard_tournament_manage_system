@@ -1,0 +1,69 @@
+const { mongoose } = require('../../config/db');
+const { createAuditFields } = require('../../common/utils/auditFields');
+const { SKILL_LEVELS } = require('../../common/constants/skillLevel');
+
+const MatchSchema = new mongoose.Schema({
+  tournamentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tournament', required: true, index: true },
+  skillLevel: { type: String, enum: SKILL_LEVELS, required: true, index: true },
+  bracketLabel: { type: String, required: true },
+  roundNumber: { type: Number, required: true, index: true },
+  roundLabel: { type: String, required: true },
+  stage: {
+    type: String,
+    enum: [
+      'qualifier',
+      'round_of_32',
+      'round_of_16',
+      'quarter_final',
+      'semi_final',
+      'final',
+      'round_1',
+      'round_2',
+      'round_3',
+      'round_4',
+      'round_5',
+      'league_round',
+      'group_stage',
+      'loser_round',
+      'bronze_match',
+      'grand_final',
+      'winner_final',
+      'loser_final',
+    ],
+    required: true,
+  },
+  bracketType: { type: String, enum: ['main', 'loser', 'final'], default: 'main' },
+  matchNumber: { type: Number, required: true },
+  tableNo: { type: String, default: null },
+  scheduledAt: { type: Date, default: null, index: true },
+  startedAt: { type: Date, default: null },
+  completedAt: { type: Date, default: null },
+  raceTo: { type: Number, required: true, min: 1 },
+  player1Id: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', default: null },
+  player2Id: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', default: null },
+  player1Score: { type: Number, default: 0, min: 0 },
+  player2Score: { type: Number, default: 0, min: 0 },
+  winnerPlayerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', default: null, index: true },
+  loserPlayerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', default: null },
+  status: { type: String, enum: ['scheduled', 'ready', 'ongoing', 'completed', 'cancelled'], default: 'scheduled', index: true },
+  nextMatchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Match', default: null },
+  nextMatchSlot: { type: Number, enum: [1, 2], default: null },
+  loserNextMatchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Match', default: null },
+  loserNextMatchSlot: { type: Number, enum: [1, 2], default: null },
+  sourceMatch1Id: { type: mongoose.Schema.Types.ObjectId, ref: 'Match', default: null },
+  sourceMatch2Id: { type: mongoose.Schema.Types.ObjectId, ref: 'Match', default: null },
+  resultLocked: { type: Boolean, default: false },
+  scoreAccess: {
+    tokenHash: { type: String, default: null, index: true, select: false },
+    enabledAt: { type: Date, default: null },
+    lastUsedAt: { type: Date, default: null },
+  },
+  ...createAuditFields(),
+}, {
+  timestamps: true,
+  optimisticConcurrency: true,
+});
+
+MatchSchema.index({ tournamentId: 1, skillLevel: 1, roundNumber: 1, matchNumber: 1 }, { unique: true });
+
+module.exports = mongoose.model('Match', MatchSchema);

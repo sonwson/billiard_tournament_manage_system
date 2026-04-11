@@ -1,0 +1,51 @@
+{
+  "name": "billiard_tournament_2",
+  "version": "1.0.0",
+  "description": "Backend API for billiards tournament management",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "lint": "eslint .",
+    "seed:admin": "node src/scripts/seedAdmin.js",
+    "fix:player-user-index": "node src/scripts/fixPlayerUserIdIndex.js"
+  },
+  "keywords": [
+    "express",
+    "mongoose",
+    "jwt",
+    "billiards",
+    "rest-api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
+    "http-status-codes": "^2.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.3.3",
+    "morgan": "^1.10.1",
+    "nodemailer": "^8.0.5",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "qrcode": "^1.5.4",
+    "slugify": "^1.6.9",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "eslint": "^9.38.0",
+    "globals": "^16.4.0",
+    "nodemon": "^3.1.10"
+  }
+}
