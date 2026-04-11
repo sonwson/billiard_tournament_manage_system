@@ -16,8 +16,36 @@ const routes = require('./routes');
 
 const app = express();
 
+function normalizeOrigin(origin = '') {
+  return String(origin)
+    .trim()
+    .replace(/^http:\/\/https:\/\//i, 'https://')
+    .replace(/^https:\/\/http:\/\//i, 'http://')
+    .replace(/\/+$/, '');
+}
+
+const allowedOrigins = String(env.clientUrl || '*')
+  .split(',')
+  .map((origin) => normalizeOrigin(origin))
+  .filter(Boolean);
+
 app.use(helmet());
-app.use(cors({ origin: env.clientUrl, credentials: true }));
+app.use(cors({
+  origin(origin, callback) {
+    const normalizedRequestOrigin = normalizeOrigin(origin || '');
+
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(normalizedRequestOrigin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${normalizedRequestOrigin}`));
+  },
+  credentials: true,
+}));
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
