@@ -246,6 +246,67 @@ async function updateRegistrationStats(tournamentId, playerId, win, stage) {
   await registration.save();
 }
 
+function normalizePrizeLabel(label = '') {
+  return String(label)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function getPrizeAmountPerWinner(prizeRow) {
+  if (!prizeRow) return 0;
+  const payoutCount = Number(prizeRow.payoutCount || 1);
+  const totalAmount = Number(prizeRow.amount || 0);
+
+  if (payoutCount <= 0) {
+    return totalAmount;
+  }
+
+  return Math.round(totalAmount / payoutCount);
+}
+
+function findPrizeRow(prizeStructure = [], aliases = []) {
+  const normalizedAliases = aliases.map((alias) => normalizePrizeLabel(alias));
+  return prizeStructure.find((item) => normalizedAliases.includes(normalizePrizeLabel(item.label)));
+}
+
+async function awardPlacementBucket({
+  playerIds,
+  tournament,
+  skillLevel,
+  sourceType,
+  sourceSuffix,
+  pointsRule,
+  tierMultiplier,
+  prizeRow,
+  createdBy,
+  metricIncrements = {},
+  note,
+}) {
+  const uniquePlayerIds = [...new Set((playerIds || []).map((playerId) => toObjectIdString(playerId)).filter(Boolean))];
+
+  if (!uniquePlayerIds.length) {
+    return;
+  }
+
+  const pointsDelta = Math.round(pointsRule * tierMultiplier);
+  const prizeMoneyDelta = getPrizeAmountPerWinner(prizeRow);
+
+  for (const playerId of uniquePlayerIds) {
+    await rankingService.recordPointChange({
+      playerId,
+      tournamentId: tournament._id,
+      sourceType,
+      sourceKey: `tournament:${tournament._id}:placement:${skillLevel}:${sourceSuffix}:${playerId}`,
+      pointsDelta,
+      prizeMoneyDelta,
+      note,
+      createdBy,
+      metricIncrements,
+    });
+  }
+}
+
 async function finalizeTournamentIfNeeded(match, actorId) {
   if (!['final', 'grand_final'].includes(match.stage)) {
     return null;
@@ -259,6 +320,11 @@ async function finalizeTournamentIfNeeded(match, actorId) {
     { limit: 1024 },
   );
   const tierMultiplier = rankingService.TIER_MULTIPLIER[tournament.tier] || 1;
+  const championPrize = findPrizeRow(tournament.prizeStructure, ['champion', 'winner', '1st', '1st_place']);
+  const runnerUpPrize = findPrizeRow(tournament.prizeStructure, ['runner_up', 'runner-up', 'finalist', '2nd', '2nd_place']);
+  const top4Prize = findPrizeRow(tournament.prizeStructure, ['top_4', 'top4', 'semi_final', 'semi-final', 'semifinal', 'semi finalist']);
+  const top8Prize = findPrizeRow(tournament.prizeStructure, ['top_8', 'top8', 'quarter_final', 'quarter-final', 'quarterfinal', 'quarter finalist']);
+  const top16Prize = findPrizeRow(tournament.prizeStructure, ['top_16', 'top16', 'last_16', 'last16']);
 
   for (const registration of approvedRegistrations) {
     await rankingService.recordPointChange({
@@ -281,64 +347,80 @@ async function finalizeTournamentIfNeeded(match, actorId) {
     { tournamentId: tournament._id, skillLevel: match.skillLevel, stage: 'quarter_final', status: 'completed' },
     { limit: 8 },
   );
+  const roundOf16Losers = await matchRepository.findMany(
+    { tournamentId: tournament._id, skillLevel: match.skillLevel, stage: 'round_of_16', status: 'completed' },
+    { limit: 16 },
+  );
 
-  for (const semi of semifinalLosers) {
-    if (semi.loserPlayerId) {
-      await rankingService.recordPointChange({
-        playerId: semi.loserPlayerId,
-        tournamentId: tournament._id,
-        sourceType: 'top4',
-        sourceKey: `tournament:${tournament._id}:placement:${match.skillLevel}:top4:${semi.loserPlayerId}`,
-        pointsDelta: Math.round(rankingService.POINT_RULES.top4 * tierMultiplier),
-        note: `Top 4 bonus for ${tournament.name}`,
-        createdBy: actorId,
-        metricIncrements: { top4Count: 1 },
-      });
-    }
-  }
+  await awardPlacementBucket({
+    playerIds: semifinalLosers.map((item) => item.loserPlayerId),
+    tournament,
+    skillLevel: match.skillLevel,
+    sourceType: 'top4',
+    sourceSuffix: 'top4',
+    pointsRule: rankingService.POINT_RULES.top4,
+    tierMultiplier,
+    prizeRow: top4Prize,
+    createdBy: actorId,
+    metricIncrements: { top4Count: 1 },
+    note: `Top 4 bonus for ${tournament.name}`,
+  });
 
-  for (const quarter of quarterFinalLosers) {
-    if (quarter.loserPlayerId) {
-      await rankingService.recordPointChange({
-        playerId: quarter.loserPlayerId,
-        tournamentId: tournament._id,
-        sourceType: 'top8',
-        sourceKey: `tournament:${tournament._id}:placement:${match.skillLevel}:top8:${quarter.loserPlayerId}`,
-        pointsDelta: Math.round(rankingService.POINT_RULES.top8 * tierMultiplier),
-        note: `Top 8 bonus for ${tournament.name}`,
-        createdBy: actorId,
-        metricIncrements: { top8Count: 1 },
-      });
-    }
-  }
+  await awardPlacementBucket({
+    playerIds: quarterFinalLosers.map((item) => item.loserPlayerId),
+    tournament,
+    skillLevel: match.skillLevel,
+    sourceType: 'top8',
+    sourceSuffix: 'top8',
+    pointsRule: rankingService.POINT_RULES.top8,
+    tierMultiplier,
+    prizeRow: top8Prize,
+    createdBy: actorId,
+    metricIncrements: { top8Count: 1 },
+    note: `Top 8 bonus for ${tournament.name}`,
+  });
 
-  if (match.loserPlayerId) {
-    await rankingService.recordPointChange({
-      playerId: match.loserPlayerId,
-      tournamentId: tournament._id,
-      matchId: match._id,
-      sourceType: 'runner_up',
-      sourceKey: `tournament:${tournament._id}:placement:${match.skillLevel}:runner_up:${match.loserPlayerId}`,
-      pointsDelta: Math.round(rankingService.POINT_RULES.runnerUp * tierMultiplier),
-      note: `Runner-up bonus for ${tournament.name}`,
-      createdBy: actorId,
-      metricIncrements: { runnerUps: 1 },
-    });
-  }
+  await awardPlacementBucket({
+    playerIds: roundOf16Losers.map((item) => item.loserPlayerId),
+    tournament,
+    skillLevel: match.skillLevel,
+    sourceType: 'top16',
+    sourceSuffix: 'top16',
+    pointsRule: rankingService.POINT_RULES.top16,
+    tierMultiplier,
+    prizeRow: top16Prize,
+    createdBy: actorId,
+    metricIncrements: { top16Count: 1 },
+    note: `Top 16 bonus for ${tournament.name}`,
+  });
 
-  if (match.winnerPlayerId) {
-    await rankingService.recordPointChange({
-      playerId: match.winnerPlayerId,
-      tournamentId: tournament._id,
-      matchId: match._id,
-      sourceType: 'champion',
-      sourceKey: `tournament:${tournament._id}:placement:${match.skillLevel}:champion:${match.winnerPlayerId}`,
-      pointsDelta: Math.round(rankingService.POINT_RULES.champion * tierMultiplier),
-      note: `Champion bonus for ${tournament.name}`,
-      createdBy: actorId,
-      metricIncrements: { championships: 1 },
-    });
-  }
+  await awardPlacementBucket({
+    playerIds: [match.loserPlayerId],
+    tournament,
+    skillLevel: match.skillLevel,
+    sourceType: 'runner_up',
+    sourceSuffix: 'runner_up',
+    pointsRule: rankingService.POINT_RULES.runnerUp,
+    tierMultiplier,
+    prizeRow: runnerUpPrize,
+    createdBy: actorId,
+    metricIncrements: { runnerUps: 1 },
+    note: `Runner-up bonus for ${tournament.name}`,
+  });
+
+  await awardPlacementBucket({
+    playerIds: [match.winnerPlayerId],
+    tournament,
+    skillLevel: match.skillLevel,
+    sourceType: 'champion',
+    sourceSuffix: 'champion',
+    pointsRule: rankingService.POINT_RULES.champion,
+    tierMultiplier,
+    prizeRow: championPrize,
+    createdBy: actorId,
+    metricIncrements: { championships: 1 },
+    note: `Champion bonus for ${tournament.name}`,
+  });
 
   tournament.championsBySkillLevel = [
     ...(tournament.championsBySkillLevel || []).filter((item) => item.skillLevel !== match.skillLevel),

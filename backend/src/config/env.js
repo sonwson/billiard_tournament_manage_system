@@ -8,7 +8,7 @@ const env = {
   appName: process.env.APP_NAME || 'Billiards Tournament API',
   apiPrefix: process.env.API_PREFIX || '/api/v1',
   clientUrl: process.env.CLIENT_URL || '*',
-  mongoUri: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/billiards_tournament',
+  mongoUri: process.env.MONGO_URI || 'mongodb+srv://sonctb23kh099_db_user:Tuanson1011@cluster0.heewn33.mongodb.net/Simple_Blog?retryWrites=true&w=majority&appName=Clusterr0',
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET || 'access-secret',
     refreshSecret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',

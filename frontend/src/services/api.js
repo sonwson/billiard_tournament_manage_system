@@ -121,9 +121,37 @@ export const tournamentService = {
     return response.data.map(normalizeTournament)
   },
   async getById(eventId) {
-    const response = await apiRequest(`/tournaments/${eventId}`)
+    const [response, rankingResponse] = await Promise.all([
+      apiRequest(`/tournaments/${eventId}`),
+      apiRequest('/rankings'),
+    ])
+
     const matches = response.data.matches || response.data.upcomingMatches || []
-    const approvedPlayers = (response.data.approvedPlayers || []).map((item, index) => normalizePlayer(item, index))
+    const rankingMap = new Map(
+      (rankingResponse.data || []).map((item, index) => {
+        const normalized = normalizePlayer(item, index)
+        return [normalized.id, normalized]
+      }),
+    )
+
+    const approvedPlayers = (response.data.approvedPlayers || []).map((item, index) => {
+      const normalizedPlayer = normalizePlayer(item, index)
+      const rankingSnapshot = rankingMap.get(normalizedPlayer.id)
+
+      if (!rankingSnapshot) {
+        return normalizedPlayer
+      }
+
+      return {
+        ...normalizedPlayer,
+        ranking: rankingSnapshot.ranking,
+        points: rankingSnapshot.points,
+        prizeMoney: rankingSnapshot.prizeMoney,
+        wins: rankingSnapshot.wins,
+        titles: rankingSnapshot.titles,
+      }
+    })
+
     const normalizedEvent = normalizeTournament(response.data.tournament)
 
     return {

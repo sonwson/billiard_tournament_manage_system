@@ -1,19 +1,20 @@
-const rankingRepository = require('./ranking.repository');
+﻿const rankingRepository = require('./ranking.repository');
 const { parsePagination } = require('../../common/utils/pagination');
 
 const POINT_RULES = {
-  participation: 5,
-  matchWin: 12,
+  participation: 3,
+  matchWin: 7,
+  top16: 8,
   top8: 15,
-  top4: 30,
-  runnerUp: 50,
-  champion: 80,
+  top4: 28,
+  runnerUp: 42,
+  champion: 60,
 };
 
 const TIER_MULTIPLIER = {
   local: 1,
-  monthly: 1.1,
-  major: 1.25,
+  monthly: 1.15,
+  major: 1.35,
 };
 
 async function listRankings(query) {
@@ -49,6 +50,7 @@ async function recordPointChange({
   sourceType,
   sourceKey,
   pointsDelta,
+  prizeMoneyDelta = 0,
   note = '',
   createdBy = null,
   metricIncrements = {},
@@ -70,29 +72,32 @@ async function recordPointChange({
     sourceType,
     sourceKey,
     pointsDelta,
+    prizeMoneyDelta,
     pointsBefore: before,
     pointsAfter: after,
     note,
     createdBy,
   });
 
-  return rankingRepository.upsertRanking(
-    { playerId, seasonKey },
-    {
-      $set: {
-        totalPoints: after,
-        lastTournamentId: tournamentId,
-        lastCalculatedAt: new Date(),
-        updatedBy: createdBy,
-      },
-      $inc: metricIncrements,
-      $setOnInsert: {
-        playerId,
-        seasonKey,
-        createdBy,
-      },
+  const update = {
+    $set: {
+      totalPoints: after,
+      lastTournamentId: tournamentId,
+      lastCalculatedAt: new Date(),
+      updatedBy: createdBy,
     },
-  );
+    $inc: {
+      ...metricIncrements,
+      totalPrizeMoney: prizeMoneyDelta,
+    },
+    $setOnInsert: {
+      playerId,
+      seasonKey,
+      createdBy,
+    },
+  };
+
+  return rankingRepository.upsertRanking({ playerId, seasonKey }, update);
 }
 
 async function rebuildRanks(seasonKey = 'all_time') {

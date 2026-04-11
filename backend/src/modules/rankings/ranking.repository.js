@@ -1,10 +1,10 @@
-const Ranking = require('./ranking.model');
+﻿const Ranking = require('./ranking.model');
 const RankingHistory = require('./ranking-history.model');
 
 async function findMany(filter, options = {}) {
   return Ranking.find(filter)
     .populate('playerId')
-    .sort(options.sort || { totalPoints: -1, matchesWon: -1, championships: -1 })
+    .sort(options.sort || { totalPoints: -1, championships: -1, matchesWon: -1, totalPrizeMoney: -1 })
     .skip(options.skip || 0)
     .limit(options.limit || 10);
 }

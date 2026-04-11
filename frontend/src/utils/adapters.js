@@ -69,12 +69,22 @@ export function normalizeTournament(rawTournament) {
     tvTableCount: rawTournament.tvTableCount || 0,
     fieldSize: rawTournament.maxPlayers || rawTournament.fieldSize || 32,
     prizeBreakdown:
-      rawTournament.prizeBreakdown ||
-      rawTournament.prizeStructure ||
-      [
-        { label: 'Champion', amount: 0 },
-        { label: 'Runner-up', amount: 0 },
-      ],
+      (rawTournament.prizeBreakdown || rawTournament.prizeStructure || [
+        { label: 'Champion', amount: 0, payoutCount: 1 },
+        { label: 'Runner-up', amount: 0, payoutCount: 1 },
+      ]).map((item) => {
+        const payoutCount = Number(item.payoutCount || 1)
+        const totalAmount = Number(item.totalAmount ?? item.amount ?? 0)
+        const perPlayerAmount = payoutCount > 0 ? totalAmount / payoutCount : totalAmount
+
+        return {
+          ...item,
+          payoutCount,
+          amount: totalAmount,
+          totalAmount,
+          perPlayerAmount,
+        }
+      }),
     raceToRules: rawTournament.raceToRules || [],
     bracketSettings: normalizedBracketSettings,
     overview:
@@ -103,6 +113,7 @@ export function normalizePlayer(rawPlayer, index = 0) {
   const id = source.id || source._id
   const name = source.name || source.displayName || 'Unknown Player'
   const points = rawPlayer.points || rawPlayer.totalPoints || source.stats?.rankingPoints || 0
+  const prizeMoney = rawPlayer.prizeMoney || rawPlayer.totalPrizeMoney || source.stats?.totalPrizeMoney || 0
 
   return {
     id,
@@ -114,7 +125,7 @@ export function normalizePlayer(rawPlayer, index = 0) {
     phone: source.phone || rawPlayer.phone || '',
     ranking: rawPlayer.ranking || rawPlayer.currentRank || index + 1,
     points,
-    prizeMoney: rawPlayer.prizeMoney || points * 25,
+    prizeMoney,
     wins: rawPlayer.wins || rawPlayer.matchesWon || source.stats?.matchesWon || 0,
     titles: rawPlayer.titles || rawPlayer.championships || source.stats?.championships || 0,
     skillLevel: rawPlayer.skillLevel || rawPlayer.snapshot?.skillLevel || source.skillLevel || null,

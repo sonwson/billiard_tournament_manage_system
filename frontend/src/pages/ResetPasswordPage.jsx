@@ -10,7 +10,7 @@ function ResetPasswordPage() {
   const pushToast = useAppStore((state) => state.pushToast)
   const [formState, setFormState] = useState({
     email: location.state?.email || '',
-    verificationCode: '',
+    verificationCode: location.state?.verificationCode || '',
     newPassword: '',
     confirmPassword: '',
   })

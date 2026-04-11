@@ -170,9 +170,19 @@ function EventDetailPage() {
               <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#EAB308]">Prize Breakdown</p>
               <div className="mt-6 space-y-3">
                 {event.prizeBreakdown.map((item) => (
-                  <div key={item.label} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    <span className="font-medium text-slate-200">{item.label}</span>
-                    <span className="font-bold text-white">{formatCurrency(item.amount)}</span>
+                  <div key={`${item.label}-${item.payoutCount || 1}`} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-semibold text-white">{item.label}</p>
+                        <p className="mt-1 text-sm text-slate-300">
+                          {item.payoutCount || 1} {(item.payoutCount || 1) > 1 ? 'players' : 'player'} - {formatCurrency(item.perPlayerAmount || item.amount || 0)} each
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Total</p>
+                        <p className="mt-1 font-bold text-white">{formatCurrency(item.totalAmount || item.amount || 0)}</p>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

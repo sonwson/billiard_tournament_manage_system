@@ -1,4 +1,4 @@
-const { mongoose } = require('../../config/db');
+﻿const { mongoose } = require('../../config/db');
 
 const RankingHistorySchema = new mongoose.Schema({
   playerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', required: true, index: true },
@@ -7,11 +7,12 @@ const RankingHistorySchema = new mongoose.Schema({
   matchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Match', default: null, index: true },
   sourceType: {
     type: String,
-    enum: ['participation', 'match_win', 'top8', 'top4', 'runner_up', 'champion', 'manual_adjustment', 'reversal'],
+    enum: ['participation', 'match_win', 'top16', 'top8', 'top4', 'runner_up', 'champion', 'manual_adjustment', 'reversal'],
     required: true,
   },
   sourceKey: { type: String, required: true },
   pointsDelta: { type: Number, required: true },
+  prizeMoneyDelta: { type: Number, default: 0 },
   pointsBefore: { type: Number, required: true },
   pointsAfter: { type: Number, required: true },
   note: { type: String, default: '' },

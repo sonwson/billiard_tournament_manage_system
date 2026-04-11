@@ -1,4 +1,4 @@
-import { ArrowLeft, Mail, Send } from 'lucide-react'
+﻿import { ArrowLeft, KeyRound, Mail, Send } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { authService } from '../services/api'
@@ -7,10 +7,14 @@ import { useAppStore } from '../store/appStore'
 function ForgotPasswordPage() {
   const pushToast = useAppStore((state) => state.pushToast)
   const [email, setEmail] = useState('')
-  const [submitting, setSubmitting] = useState(false)
   const [verificationCode, setVerificationCode] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [sentEmail, setSentEmail] = useState('')
+  const [developmentCode, setDevelopmentCode] = useState('')
   const [deliveryMethod, setDeliveryMethod] = useState('')
   const navigate = useNavigate()
+
+  const canContinue = sentEmail && verificationCode.trim().length === 6
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -18,13 +22,19 @@ function ForgotPasswordPage() {
 
     try {
       const response = await authService.forgotPassword({ email })
-      setVerificationCode(response.data?.verificationCode || '')
-      setDeliveryMethod(response.data?.deliveryMethod || '')
+      const nextDeliveryMethod = response.data?.deliveryMethod || ''
+      const nextVerificationCode = response.data?.verificationCode || ''
+
+      setSentEmail(email)
+      setDeliveryMethod(nextDeliveryMethod)
+      setDevelopmentCode(nextVerificationCode)
+      setVerificationCode(nextVerificationCode || '')
+
       pushToast({
         type: 'success',
         title: 'Verification code sent',
-        message: response.data?.deliveryMethod === 'console'
-          ? 'SMTP is not configured, so the code was returned in development mode below.'
+        message: nextDeliveryMethod === 'console'
+          ? 'SMTP fallback is active, so the verification code is shown below for development testing.'
           : 'Please check your email for the 6-digit verification code.',
       })
     } catch (error) {
@@ -32,6 +42,24 @@ function ForgotPasswordPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  function handleContinue() {
+    if (!canContinue) {
+      pushToast({
+        type: 'warning',
+        title: 'Verification code required',
+        message: 'Enter the 6-digit code that was sent to your email before continuing.',
+      })
+      return
+    }
+
+    navigate('/reset-password', {
+      state: {
+        email: sentEmail || email,
+        verificationCode,
+      },
+    })
   }
 
   return (
@@ -73,6 +101,30 @@ function ForgotPasswordPage() {
             </button>
           </form>
 
+          {sentEmail ? (
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+              <p className="text-sm font-semibold text-slate-900">Enter verification code</p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                We sent a 6-digit code to <span className="font-semibold text-slate-700">{sentEmail}</span>.
+              </p>
+
+              <label className="mt-4 block">
+                <span className="mb-2 block text-sm font-semibold text-slate-700">Verification Code</span>
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <KeyRound className="h-5 w-5 text-slate-400" />
+                  <input
+                    className="w-full border-none bg-transparent uppercase tracking-[0.45em] outline-none"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={verificationCode}
+                    onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, ''))}
+                  />
+                </div>
+              </label>
+            </div>
+          ) : null}
+
           {deliveryMethod === 'console' ? (
             <div className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-4">
               <p className="text-sm font-semibold text-sky-900">SMTP is not configured yet</p>
@@ -83,17 +135,18 @@ function ForgotPasswordPage() {
             </div>
           ) : null}
 
-          {verificationCode ? (
+          {developmentCode ? (
             <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
               <p className="text-sm font-semibold text-amber-900">Development verification code</p>
-              <p className="mt-2 text-2xl font-bold tracking-[0.24em] text-amber-950">{verificationCode}</p>
+              <p className="mt-2 text-2xl font-bold tracking-[0.24em] text-amber-950">{developmentCode}</p>
             </div>
           ) : null}
 
           <button
             type="button"
-            onClick={() => navigate('/reset-password', { state: { email } })}
-            className="mt-6 inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            onClick={handleContinue}
+            disabled={!canContinue}
+            className="mt-6 inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
           >
             Continue to Reset Password
           </button>
