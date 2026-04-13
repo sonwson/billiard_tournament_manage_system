@@ -27,30 +27,40 @@ function PlayerStatsTable({ stats }) {
               <th className="px-3 py-3 text-center font-bold text-amber-600">{t(locale, 'playerStats.raceDiff')}</th>
             </tr>
           </thead>
-          <tbody>
-            {players.map((player, index) => (
-              <tr
-                key={player.playerId}
-                className={`border-b border-slate-100 ${index % 2 === 0 ? 'bg-slate-50' : 'bg-white'}`}
-              >
-                <td className="px-3 py-3 font-bold text-slate-900">#{player.rank}</td>
-                <td className="px-3 py-3">
-                  <div className="font-semibold text-slate-900">
-                    {player.player?.displayName || player.player?.playerCode || 'Unknown'}
-                  </div>
-                  {player.player?.club ? (
-                    <div className="text-xs text-slate-500">{player.player.club}</div>
-                  ) : null}
-                </td>
-                <td className="px-3 py-3 text-center text-slate-600">{player.matchesPlayed}</td>
-                <td className="px-3 py-3 text-center font-semibold text-emerald-600">{player.wins}</td>
-                <td className="px-3 py-3 text-center font-semibold text-rose-600">{player.losses}</td>
-                <td className="px-3 py-3 text-center font-bold text-slate-900">{player.points}</td>
-                <td className="px-3 py-3 text-center text-slate-600">{player.racesWon}</td>
-                <td className="px-3 py-3 text-center text-slate-600">{player.racesLost}</td>
-                <td className="px-3 py-3 text-center font-bold text-amber-600">{player.raceDiff}</td>
-              </tr>
-            ))}
+                    <tbody>
+            {players.map((player, index) => {
+              const resolvedPlayer = player.player || player.playerId || null
+              const playerName =
+                resolvedPlayer?.displayName
+                || resolvedPlayer?.name
+                || player.snapshot?.displayName
+                || resolvedPlayer?.playerCode
+                || 'Unknown'
+
+              return (
+                <tr
+                  key={player.playerId}
+                  className={`border-b border-slate-100 ${index % 2 === 0 ? 'bg-slate-50' : 'bg-white'}`}
+                >
+                  <td className="px-3 py-3 font-bold text-slate-900">#{player.rank}</td>
+                  <td className="px-3 py-3">
+                    <div className="font-semibold text-slate-900">
+                      {playerName}
+                    </div>
+                    {resolvedPlayer?.club ? (
+                      <div className="text-xs text-slate-500">{resolvedPlayer.club}</div>
+                    ) : null}
+                  </td>
+                  <td className="px-3 py-3 text-center text-slate-600">{player.matchesPlayed}</td>
+                  <td className="px-3 py-3 text-center font-semibold text-emerald-600">{player.wins}</td>
+                  <td className="px-3 py-3 text-center font-semibold text-rose-600">{player.losses}</td>
+                  <td className="px-3 py-3 text-center font-bold text-slate-900">{player.points}</td>
+                  <td className="px-3 py-3 text-center text-slate-600">{player.racesWon}</td>
+                  <td className="px-3 py-3 text-center text-slate-600">{player.racesLost}</td>
+                  <td className="px-3 py-3 text-center font-bold text-amber-600">{player.raceDiff}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

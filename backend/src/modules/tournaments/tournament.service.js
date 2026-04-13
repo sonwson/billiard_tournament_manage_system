@@ -1373,7 +1373,7 @@ async function getPlayerStats(tournamentId) {
 
     return {
       playerId: reg.playerId,
-      player: reg.player || null,
+      player: reg.player || reg.playerId || null,
       skillLevel: reg.skillLevel || 'Open',
       seedingNumber: reg.seedingNumber || null,
       wins: s.wins,
