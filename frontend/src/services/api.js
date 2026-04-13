@@ -422,6 +422,11 @@ export const rankingService = {
     const response = await apiRequest('/rankings')
     return response.data.map((item, index) => normalizePlayer(item, index))
   },
+  async recalculate() {
+    return apiRequest('/rankings/recalculate', {
+      method: 'POST',
+    })
+  },
 }
 
 export const statisticsService = {

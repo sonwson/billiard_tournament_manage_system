@@ -190,6 +190,12 @@
     empty: 'Chưa có dữ liệu xếp hạng.',
     byPoints: 'Xếp hạng theo điểm',
     byPrizeMoney: 'Xếp hạng theo tiền thưởng',
+    resetAction: 'Đặt lại xếp hạng',
+    resetting: 'Đang đặt lại...',
+    resetSuccessTitle: 'Đã đặt lại xếp hạng',
+    resetSuccessMessage: 'Bảng xếp hạng đã được tính lại thành công.',
+    resetFailedTitle: 'Không thể đặt lại xếp hạng',
+    resetFailedMessage: 'Hiện chưa thể tính lại bảng xếp hạng.',
   },
   playersPage: {
     eyebrow: 'Danh sách cơ thủ',
@@ -594,7 +600,7 @@
     H: 'H',
     I: 'I',
     K: 'K',
-    open: 'M?',
+    open: 'Mở',
   },
   sortOptions: {
     created_desc: 'Mới tạo gần đây',

@@ -190,6 +190,12 @@
     empty: 'No ranking data available yet.',
     byPoints: 'Rank by Points',
     byPrizeMoney: 'Rank by Prize Money',
+    resetAction: 'Reset Ranking',
+    resetting: 'Resetting...',
+    resetSuccessTitle: 'Ranking reset complete',
+    resetSuccessMessage: 'The leaderboard has been recalculated successfully.',
+    resetFailedTitle: 'Unable to reset ranking',
+    resetFailedMessage: 'The leaderboard could not be recalculated right now.',
   },
   playersPage: {
     eyebrow: 'Player Directory',

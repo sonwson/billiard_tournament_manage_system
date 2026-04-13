@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 export function useAsyncData(loader, options = {}) {
   const refreshMs = options.refreshMs || 0
@@ -6,31 +6,43 @@ export function useAsyncData(loader, options = {}) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  const run = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setLoading(true)
+    }
+    setError(null)
+
+    try {
+      const result = await loader()
+      setData(result)
+      return result
+    } catch (caughtError) {
+      setError(caughtError)
+      throw caughtError
+    } finally {
+      setLoading(false)
+    }
+  }, [loader])
+
   useEffect(() => {
     let active = true
     let intervalId = null
 
-    async function run(showLoading = true) {
-      if (showLoading) {
-        setLoading(true)
-      }
-      setError(null)
-
+    const safeRun = async (showLoading = true) => {
       try {
-        const result = await loader()
-        if (active) setData(result)
-      } catch (caughtError) {
-        if (active) setError(caughtError)
-      } finally {
-        if (active) setLoading(false)
+        await run(showLoading)
+      } catch {
+        if (!active) {
+          return
+        }
       }
     }
 
-    run()
+    safeRun()
 
     if (refreshMs > 0) {
       intervalId = window.setInterval(() => {
-        run(false)
+        safeRun(false)
       }, refreshMs)
     }
 
@@ -40,7 +52,7 @@ export function useAsyncData(loader, options = {}) {
         window.clearInterval(intervalId)
       }
     }
-  }, [loader, refreshMs])
+  }, [refreshMs, run])
 
-  return { data, loading, error, setData }
+  return { data, loading, error, setData, reload: run }
 }

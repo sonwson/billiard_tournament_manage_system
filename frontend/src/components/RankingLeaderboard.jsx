@@ -37,7 +37,7 @@ function RankingLeaderboard({ players = [], initialMetric = 'points' }) {
 
   return (
     <>
-      <div className="mb-5 flex flex-wrap gap-3">
+      <div className="mb-4 flex flex-wrap gap-2.5 sm:mb-5 sm:gap-3">
         {options.map((option) => {
           const active = option.value === metric
 
@@ -46,7 +46,7 @@ function RankingLeaderboard({ players = [], initialMetric = 'points' }) {
               key={option.value}
               type="button"
               onClick={() => setMetric(option.value)}
-              className={`rounded-full px-5 py-3 text-sm font-semibold transition ${
+              className={`rounded-full px-4 py-2.5 text-sm font-semibold transition sm:px-5 sm:py-3 ${
                 active
                   ? 'border border-slate-200 bg-slate-100 text-slate-900 shadow-sm'
                   : 'bg-white text-slate-600 hover:bg-slate-50'
@@ -59,8 +59,8 @@ function RankingLeaderboard({ players = [], initialMetric = 'points' }) {
       </div>
 
       {featuredPlayers.length ? (
-        <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_26px_75px_-48px_rgba(15,23,42,0.48)]">
-          <div className="h-18 bg-[linear-gradient(120deg,rgba(15,23,42,0.96),rgba(20,33,61,0.92)),linear-gradient(90deg,rgba(234,179,8,0.18),transparent)]" />
+        <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_26px_75px_-48px_rgba(15,23,42,0.48)] sm:rounded-[2rem]">
+          <div className="h-14 bg-[linear-gradient(120deg,rgba(15,23,42,0.96),rgba(20,33,61,0.92)),linear-gradient(90deg,rgba(234,179,8,0.18),transparent)] sm:h-18" />
 
           <div className="space-y-1 bg-gradient-to-b from-white via-white to-slate-50/70 p-3 sm:p-4">
             {featuredPlayers.map((player, index) => (
@@ -77,7 +77,7 @@ function RankingLeaderboard({ players = [], initialMetric = 'points' }) {
         </div>
       ) : null}
 
-      <div className="mt-6 space-y-3">
+      <div className="mt-4 space-y-2.5 sm:mt-6 sm:space-y-3">
         {remainingPlayers.map((player, index) => (
           <RankingCard key={player.id} player={player} metric={metric} displayRank={index + 6} />
         ))}
