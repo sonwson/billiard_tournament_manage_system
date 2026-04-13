@@ -1,4 +1,4 @@
-﻿import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import EventCard from '../components/EventCard'
 import HeroBanner from '../components/ui/HeroBanner'
 import SectionHeader from '../components/ui/SectionHeader'
@@ -39,19 +39,15 @@ function EventsPage() {
 
       <section className="page-shell mt-16 pb-10">
         <SectionHeader
-          eyebrow={t(locale, 'Global Calendar', 'Lịch thi đấu')}
-          title={t(locale, 'Featured Events', 'Giải đấu nổi bật')}
-          description={t(
-            locale,
-            'Browse upcoming tournaments, live brackets, prize pools, and event status at a glance.',
-            'Theo dõi các giải đấu sắp diễn ra, nhánh đấu trực tiếp, quỹ thưởng và trạng thái giải chỉ trong một màn hình.',
-          )}
+          eyebrow={t(locale, 'eventsPage.eyebrow')}
+          title={t(locale, 'eventsPage.title')}
+          description={t(locale, 'eventsPage.description')}
         />
 
         <div className="mb-8 grid gap-4 rounded-[1.75rem] border border-slate-200 bg-white p-5 md:grid-cols-2 xl:grid-cols-4">
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-              {t(locale, 'Location', 'Địa điểm')}
+              {t(locale, 'eventsPage.location')}
             </span>
             <input
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
@@ -63,23 +59,23 @@ function EventsPage() {
 
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-              {t(locale, 'Status', 'Trạng thái')}
+              {t(locale, 'eventsPage.status')}
             </span>
             <select
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
               value={filters.status}
               onChange={(event) => updateFilter('status', event.target.value)}
             >
-              <option value="">{t(locale, 'All status', 'Tất cả trạng thái')}</option>
-              <option value="open_registration">{t(locale, 'Open Registration', 'Mở đăng ký')}</option>
-              <option value="ongoing">{t(locale, 'Ongoing', 'Đang diễn ra')}</option>
-              <option value="finished">{t(locale, 'Finished', 'Đã kết thúc')}</option>
+              <option value="">{t(locale, 'eventsPage.allStatus')}</option>
+              <option value="open_registration">{t(locale, 'eventsPage.openRegistration')}</option>
+              <option value="ongoing">{t(locale, 'eventsPage.ongoing')}</option>
+              <option value="finished">{t(locale, 'eventsPage.finished')}</option>
             </select>
           </label>
 
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-              {t(locale, 'Minimum Prize Fund', 'Quỹ thưởng tối thiểu')}
+              {t(locale, 'eventsPage.minimumPrizeFund')}
             </span>
             <input
               type="number"
@@ -93,7 +89,7 @@ function EventsPage() {
 
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-              {t(locale, 'Champion Prize At Least', 'Giải vô địch tối thiểu')}
+              {t(locale, 'eventsPage.championPrizeAtLeast')}
             </span>
             <input
               type="number"
@@ -106,12 +102,12 @@ function EventsPage() {
           </label>
         </div>
 
-        {loading ? <p className="text-sm text-slate-500">{t(locale, 'Loading tournaments...', 'Đang tải giải đấu...')}</p> : null}
+        {loading ? <p className="text-sm text-slate-500">{t(locale, 'eventsPage.loading')}</p> : null}
         {error ? <p className="text-sm font-medium text-red-600">{error.message}</p> : null}
 
         {!loading && !error && sortedTournaments.length === 0 ? (
           <div className="rounded-[1.75rem] border border-dashed border-slate-300 bg-white p-8 text-sm text-slate-500">
-            {t(locale, 'Currently there is no tournament.', 'Hiện chưa có giải đấu nào.')}
+            {t(locale, 'eventsPage.empty')}
           </div>
         ) : null}
 

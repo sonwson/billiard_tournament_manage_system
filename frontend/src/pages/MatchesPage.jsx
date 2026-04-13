@@ -24,12 +24,12 @@ function MatchesPage() {
   return (
     <section className="page-shell py-10">
       <SectionHeader
-        eyebrow={t(locale, 'Live Center', 'Trung tâm trực tiếp')}
-        title={t(locale, 'Match Schedule & Scores', 'Lịch thi đấu & Tỉ số')}
-        description={t(locale, 'Track every session with clear status color coding, race targets, and high-contrast score presentation.', 'Theo dõi từng lượt đấu với trạng thái rõ ràng, race target và phần hiển thị tỉ số nổi bật.')}
+        eyebrow={t(locale, 'matchesPage.eyebrow')}
+        title={t(locale, 'matchesPage.title')}
+        description={t(locale, 'matchesPage.description')}
       />
 
-      {loading ? <p className="text-sm text-slate-500">{t(locale, 'Loading matches...', 'Đang tải trận đấu...')}</p> : null}
+      {loading ? <p className="text-sm text-slate-500">{t(locale, 'matchesPage.loading')}</p> : null}
       {error ? <p className="text-sm font-medium text-red-600">{error.message}</p> : null}
 
       <div className="mb-6 flex flex-wrap gap-3">
@@ -43,7 +43,7 @@ function MatchesPage() {
           }`}
         >
           <List className="h-4 w-4" />
-          {t(locale, 'Match List', 'Danh sách trận')}
+          {t(locale, 'matchesPage.list')}
         </button>
         <button
           type="button"
@@ -55,7 +55,7 @@ function MatchesPage() {
           }`}
         >
           <GitBranch className="h-4 w-4" />
-          {t(locale, 'Bracket', 'Nhánh đấu')}
+          {t(locale, 'matchesPage.bracket')}
         </button>
       </div>
 

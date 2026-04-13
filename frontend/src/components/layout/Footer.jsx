@@ -11,13 +11,13 @@ function Footer() {
         <div className="space-y-3">
           <p className="display-title text-2xl text-white">BilliardHub</p>
           <p className="max-w-sm text-sm leading-6 text-slate-400">
-            {t(locale, 'International-style live scoring, rankings, player stories, and event coverage for modern billiards tournaments.', 'Nền tảng live score, bảng xếp hạng, hồ sơ cơ thủ và thông tin giải đấu cho các giải billiards hiện đại.')}
+            {t(locale, 'footer.description')}
           </p>
         </div>
 
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#EAB308]">
-            {t(locale, 'Contact', 'Liên hệ')}
+            {t(locale, 'footer.contact')}
           </p>
           <div className="mt-4 space-y-2 text-sm text-slate-300">
             <p>support@billiardhub.live</p>
@@ -29,23 +29,23 @@ function Footer() {
         <div className="space-y-4">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#EAB308]">
-              {t(locale, 'Legal', 'Pháp lý')}
+              {t(locale, 'footer.legal')}
             </p>
             <div className="mt-4 space-y-2 text-sm text-slate-300">
-              <p>{t(locale, 'Terms & Conditions', 'Điều khoản & Điều kiện')}</p>
-              <p>{t(locale, 'Privacy Policy', 'Chính sách Bảo mật')}</p>
-              <p>{t(locale, 'Broadcast & Media Guidelines', 'Hướng dẫn Truyền hình & Truyền thông')}</p>
+              <p>{t(locale, 'footer.terms')}</p>
+              <p>{t(locale, 'footer.privacy')}</p>
+              <p>{t(locale, 'footer.media')}</p>
             </div>
           </div>
 
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#EAB308]">
-              {t(locale, 'Language', 'Ngôn ngữ')}
+              {t(locale, 'footer.language')}
             </p>
             <div className="mt-4 inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1.5">
               {[
                 { value: 'en', label: 'English' },
-                { value: 'vi', label: 'Tiếng Việt' },
+                { value: 'vi', label: t(locale, 'footer.vietnamese') },
               ].map((option) => (
                 <button
                   key={option.value}

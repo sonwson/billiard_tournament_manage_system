@@ -7,9 +7,11 @@ import { authService, playerService, userService } from '../services/api'
 import { useAppStore } from '../store/appStore'
 import { SKILL_LEVEL_OPTIONS } from '../utils/uiConstants'
 import { resizeImageFileToDataUrl } from '../utils/file'
+import { t } from '../utils/i18n'
 
 function MyProfilePage() {
   const auth = useAppStore((state) => state.auth)
+  const locale = useAppStore((state) => state.locale)
   const mergeAuth = useAppStore((state) => state.mergeAuth)
   const pushToast = useAppStore((state) => state.pushToast)
   const [loading, setLoading] = useState(true)
@@ -27,7 +29,7 @@ function MyProfilePage() {
     phone: '',
     club: '',
     city: '',
-    skillLevel: 'beginner',
+    skillLevel: 'CN',
     avatarUrl: '',
   })
 
@@ -56,12 +58,12 @@ function MyProfilePage() {
           phone: nextProfile.player?.phone || nextProfile.user?.phone || '',
           club: nextProfile.player?.club || '',
           city: nextProfile.player?.city || '',
-          skillLevel: nextProfile.player?.skillLevel || 'beginner',
+          skillLevel: nextProfile.player?.skillLevel || 'CN',
           avatarUrl: nextProfile.player?.avatarUrl || '',
         })
       } catch (error) {
         if (active) {
-          pushToast({ type: 'error', title: 'Unable to load profile', message: error.message })
+          pushToast({ type: 'error', title: t(locale, 'profilePage.toasts.loadFailedTitle'), message: error.message })
         }
       } finally {
         if (active) setLoading(false)
@@ -75,15 +77,16 @@ function MyProfilePage() {
     return () => {
       active = false
     }
-  }, [auth.accessToken, pushToast])
+  }, [auth.accessToken, locale, pushToast])
 
   const requestStatus = profile.user?.tournamentAdminRequest?.status || 'none'
+  const requestStatusLabel = t(locale, `profilePage.requestStatuses.${requestStatus}`)
   const alreadyAdmin = ['admin', 'super_admin', 'tournament_admin'].includes(profile.user?.role)
   const resolvePlayerName = (playerId, fallbackName) => {
     if (String(playerId || '') === String(profile.user?.playerId || profile.player?._id || '')) {
-      return profile.player?.displayName || fallbackName || 'You'
+      return profile.player?.displayName || fallbackName || t(locale, 'profilePage.you')
     }
-    return fallbackName || 'TBD'
+    return fallbackName || t(locale, 'matchList.tbd')
   }
 
   const matchSummary = useMemo(() => myMatches.slice().sort((left, right) => new Date(left.scheduledAt).getTime() - new Date(right.scheduledAt).getTime()), [myMatches])
@@ -99,9 +102,9 @@ function MyProfilePage() {
       const response = await userService.updateMe(accountForm)
       setProfile((current) => ({ ...current, user: response.data }))
       mergeAuth({ user: response.data })
-      pushToast({ type: 'success', title: 'Account updated', message: 'Your account information has been saved.' })
+      pushToast({ type: 'success', title: t(locale, 'profilePage.toasts.accountUpdatedTitle'), message: t(locale, 'profilePage.toasts.accountUpdatedMessage') })
     } catch (error) {
-      pushToast({ type: 'error', title: 'Account update failed', message: error.message })
+      pushToast({ type: 'error', title: t(locale, 'profilePage.toasts.accountUpdateFailedTitle'), message: error.message })
     } finally {
       setSavingAccount(false)
     }
@@ -110,7 +113,7 @@ function MyProfilePage() {
   async function handlePasswordSave(event) {
     event.preventDefault()
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      pushToast({ type: 'warning', title: 'Password mismatch', message: 'Please confirm the new password correctly.' })
+      pushToast({ type: 'warning', title: t(locale, 'profilePage.toasts.passwordMismatchTitle'), message: t(locale, 'profilePage.toasts.passwordMismatchMessage') })
       return
     }
 
@@ -118,9 +121,9 @@ function MyProfilePage() {
     try {
       await userService.changePassword(passwordForm)
       setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' })
-      pushToast({ type: 'success', title: 'Password changed', message: 'Your password has been updated successfully.' })
+      pushToast({ type: 'success', title: t(locale, 'profilePage.toasts.passwordChangedTitle'), message: t(locale, 'profilePage.toasts.passwordChangedMessage') })
     } catch (error) {
-      pushToast({ type: 'error', title: 'Password change failed', message: error.message })
+      pushToast({ type: 'error', title: t(locale, 'profilePage.toasts.passwordChangeFailedTitle'), message: error.message })
     } finally {
       setSavingPassword(false)
     }
@@ -132,9 +135,9 @@ function MyProfilePage() {
     try {
       const updatedPlayer = await playerService.updateMine(playerForm)
       setProfile((current) => ({ ...current, player: updatedPlayer }))
-      pushToast({ type: 'success', title: 'Player profile updated', message: 'Your player information is now up to date.' })
+      pushToast({ type: 'success', title: t(locale, 'profilePage.toasts.playerUpdatedTitle'), message: t(locale, 'profilePage.toasts.playerUpdatedMessage') })
     } catch (error) {
-      pushToast({ type: 'error', title: 'Player profile update failed', message: error.message })
+      pushToast({ type: 'error', title: t(locale, 'profilePage.toasts.playerUpdateFailedTitle'), message: error.message })
     } finally {
       setSavingPlayer(false)
     }
@@ -147,9 +150,9 @@ function MyProfilePage() {
     try {
       const avatarUrl = await resizeImageFileToDataUrl(file, { width: 512, height: 512, quality: 0.82 })
       setPlayerForm((current) => ({ ...current, avatarUrl }))
-      pushToast({ type: 'info', title: 'Image ready', message: 'Avatar loaded. Save profile to keep it.' })
+      pushToast({ type: 'info', title: t(locale, 'profilePage.toasts.imageReadyTitle'), message: t(locale, 'profilePage.toasts.imageReadyMessage') })
     } catch (error) {
-      pushToast({ type: 'error', title: 'Image upload failed', message: error.message })
+      pushToast({ type: 'error', title: t(locale, 'profilePage.toasts.imageUploadFailedTitle'), message: error.message })
     }
   }
 
@@ -159,9 +162,9 @@ function MyProfilePage() {
       const response = await userService.requestTournamentAdmin({ note: 'Requested from player profile page' })
       setProfile((current) => ({ ...current, user: response.data }))
       mergeAuth({ user: response.data })
-      pushToast({ type: 'success', title: 'Request submitted', message: 'Tournament admin request has been sent for review.' })
+      pushToast({ type: 'success', title: t(locale, 'profilePage.toasts.requestSubmittedTitle'), message: t(locale, 'profilePage.toasts.requestSubmittedMessage') })
     } catch (error) {
-      pushToast({ type: 'error', title: 'Request failed', message: error.message })
+      pushToast({ type: 'error', title: t(locale, 'profilePage.toasts.requestFailedTitle'), message: error.message })
     } finally {
       setRequestingAdmin(false)
     }
@@ -170,12 +173,12 @@ function MyProfilePage() {
   return (
     <section className="page-shell py-10">
       <SectionHeader
-        eyebrow="My Account"
-        title="Profile Settings"
-        description="Manage account details, player profile, password, and follow only the matches that belong to you."
+        eyebrow={t(locale, 'profilePage.eyebrow')}
+        title={t(locale, 'profilePage.title')}
+        description={t(locale, 'profilePage.description')}
       />
 
-      {loading ? <p className="text-sm text-slate-500">Loading profile...</p> : null}
+      {loading ? <p className="text-sm text-slate-500">{t(locale, 'profilePage.loading')}</p> : null}
 
       {!loading ? (
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -186,8 +189,8 @@ function MyProfilePage() {
                   <ShieldCheck className="h-5 w-5 text-[#EAB308]" />
                 </div>
                 <div>
-                  <h2 className="display-title text-2xl text-[#0F172A]">Tournament Admin Request</h2>
-                  <p className="text-sm text-slate-500">Current status: {requestStatus}</p>
+                  <h2 className="display-title text-2xl text-[#0F172A]">{t(locale, 'profilePage.adminRequestTitle')}</h2>
+                  <p className="text-sm text-slate-500">{t(locale, 'profilePage.currentStatus')}: {requestStatusLabel}</p>
                 </div>
               </div>
 
@@ -199,29 +202,29 @@ function MyProfilePage() {
               >
                 <UserRoundCog className="h-4 w-4" />
                 {alreadyAdmin
-                  ? 'Admin Access Active'
+                  ? t(locale, 'profilePage.adminAccessActive')
                   : requestStatus === 'pending'
-                    ? 'Request Pending'
+                    ? t(locale, 'profilePage.requestPending')
                     : requestingAdmin
-                      ? 'Submitting...'
-                      : 'Register As Tournament Admin'}
+                      ? t(locale, 'profilePage.submitting')
+                      : t(locale, 'profilePage.registerAsTournamentAdmin')}
               </button>
             </div>
 
             <form onSubmit={handleAccountSave} className="rounded-[1.75rem] border border-slate-200 bg-white p-6">
-              <h2 className="display-title text-2xl text-[#0F172A]">Account Information</h2>
+              <h2 className="display-title text-2xl text-[#0F172A]">{t(locale, 'profilePage.accountInformation')}</h2>
               <div className="mt-5 grid gap-4">
                 <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-slate-700">Full Name</span>
+                  <span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'profilePage.fullName')}</span>
                   <input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={accountForm.fullName} onChange={(event) => setAccountForm((current) => ({ ...current, fullName: event.target.value }))} />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-slate-700">Phone</span>
+                  <span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'profilePage.phone')}</span>
                   <input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={accountForm.phone} onChange={(event) => setAccountForm((current) => ({ ...current, phone: event.target.value }))} />
                 </label>
               </div>
               <button type="submit" disabled={savingAccount} className="mt-5 rounded-2xl bg-[#EAB308] px-5 py-3 text-sm font-bold text-[#0F172A] disabled:opacity-60">
-                {savingAccount ? 'Saving...' : 'Save Account'}
+                {savingAccount ? t(locale, 'profilePage.saving') : t(locale, 'profilePage.saveAccount')}
               </button>
             </form>
 
@@ -231,38 +234,38 @@ function MyProfilePage() {
                   <KeyRound className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="display-title text-2xl text-[#0F172A]">Change Password</h2>
-                  <p className="text-sm text-slate-500">Update your password after signing in.</p>
+                  <h2 className="display-title text-2xl text-[#0F172A]">{t(locale, 'profilePage.changePassword')}</h2>
+                  <p className="text-sm text-slate-500">{t(locale, 'profilePage.changePasswordHint')}</p>
                 </div>
               </div>
 
               <div className="mt-5 grid gap-4">
                 <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-slate-700">Current Password</span>
+                  <span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'profilePage.currentPassword')}</span>
                   <input type="password" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={passwordForm.oldPassword} onChange={(event) => setPasswordForm((current) => ({ ...current, oldPassword: event.target.value }))} />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-slate-700">New Password</span>
+                  <span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'profilePage.newPassword')}</span>
                   <input type="password" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={passwordForm.newPassword} onChange={(event) => setPasswordForm((current) => ({ ...current, newPassword: event.target.value }))} />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-slate-700">Confirm New Password</span>
+                  <span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'profilePage.confirmNewPassword')}</span>
                   <input type="password" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={passwordForm.confirmPassword} onChange={(event) => setPasswordForm((current) => ({ ...current, confirmPassword: event.target.value }))} />
                 </label>
               </div>
 
               <button type="submit" disabled={savingPassword} className="mt-5 rounded-2xl bg-[#0F172A] px-5 py-3 text-sm font-bold text-white disabled:opacity-60">
-                {savingPassword ? 'Updating...' : 'Change Password'}
+                {savingPassword ? t(locale, 'profilePage.updating') : t(locale, 'profilePage.changePassword')}
               </button>
             </form>
           </div>
 
           <div className="space-y-6">
             <form onSubmit={handlePlayerSave} className="rounded-[1.75rem] border border-slate-200 bg-white p-6">
-              <h2 className="display-title text-2xl text-[#0F172A]">Player Profile</h2>
+              <h2 className="display-title text-2xl text-[#0F172A]">{t(locale, 'profilePage.playerProfile')}</h2>
               <div className="mt-5 flex items-center gap-4 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
                 {playerForm.avatarUrl ? (
-                  <img src={playerForm.avatarUrl} alt="Profile avatar" className="h-20 w-20 rounded-3xl object-cover" />
+                  <img src={playerForm.avatarUrl} alt={t(locale, 'profilePage.profileAvatarAlt')} className="h-20 w-20 rounded-3xl object-cover" />
                 ) : (
                   <div className="grid h-20 w-20 place-items-center rounded-3xl bg-[#0F172A] text-2xl font-bold text-white">
                     {(playerForm.displayName || accountForm.fullName || 'P').slice(0, 1)}
@@ -270,33 +273,33 @@ function MyProfilePage() {
                 )}
 
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-slate-800">Profile Photo</p>
-                  <p className="mt-1 text-sm text-slate-500">Upload avatar for your player profile.</p>
+                  <p className="text-sm font-semibold text-slate-800">{t(locale, 'profilePage.profilePhoto')}</p>
+                  <p className="mt-1 text-sm text-slate-500">{t(locale, 'profilePage.profilePhotoHint')}</p>
                 </div>
 
                 <label className="inline-flex cursor-pointer items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                  Upload Image
+                  {t(locale, 'profilePage.uploadImage')}
                   <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
                 </label>
               </div>
 
               <div className="mt-5 grid gap-4 md:grid-cols-2">
-                <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Display Name</span><input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={playerForm.displayName} onChange={(event) => setPlayerForm((current) => ({ ...current, displayName: event.target.value }))} /></label>
-                <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Email</span><input type="email" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={playerForm.email} onChange={(event) => setPlayerForm((current) => ({ ...current, email: event.target.value }))} /></label>
-                <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Phone</span><input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={playerForm.phone} onChange={(event) => setPlayerForm((current) => ({ ...current, phone: event.target.value }))} /></label>
-                <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Skill Level</span><select className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={playerForm.skillLevel} onChange={(event) => setPlayerForm((current) => ({ ...current, skillLevel: event.target.value }))}>{SKILL_LEVEL_OPTIONS.map((option) => (<option key={option.value} value={option.value}>{option.label}</option>))}</select></label>
-                <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Club</span><input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={playerForm.club} onChange={(event) => setPlayerForm((current) => ({ ...current, club: event.target.value }))} /></label>
-                <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">City</span><input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={playerForm.city} onChange={(event) => setPlayerForm((current) => ({ ...current, city: event.target.value }))} /></label>
+                <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'profilePage.displayName')}</span><input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={playerForm.displayName} onChange={(event) => setPlayerForm((current) => ({ ...current, displayName: event.target.value }))} /></label>
+                <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'profilePage.email')}</span><input type="email" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={playerForm.email} onChange={(event) => setPlayerForm((current) => ({ ...current, email: event.target.value }))} /></label>
+                <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'profilePage.phone')}</span><input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={playerForm.phone} onChange={(event) => setPlayerForm((current) => ({ ...current, phone: event.target.value }))} /></label>
+                <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'profilePage.skillLevel')}</span><select className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={playerForm.skillLevel} onChange={(event) => setPlayerForm((current) => ({ ...current, skillLevel: event.target.value }))}>{SKILL_LEVEL_OPTIONS.map((option) => (<option key={option.value} value={option.value}>{t(locale, `skillLevels.${option.value}`)}</option>))}</select></label>
+                <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'profilePage.club')}</span><input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={playerForm.club} onChange={(event) => setPlayerForm((current) => ({ ...current, club: event.target.value }))} /></label>
+                <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'profilePage.city')}</span><input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={playerForm.city} onChange={(event) => setPlayerForm((current) => ({ ...current, city: event.target.value }))} /></label>
               </div>
 
               <button type="submit" disabled={savingPlayer} className="mt-5 rounded-2xl bg-[#0F172A] px-5 py-3 text-sm font-bold text-white disabled:opacity-60">
-                {savingPlayer ? 'Saving...' : 'Save Player Profile'}
+                {savingPlayer ? t(locale, 'profilePage.saving') : t(locale, 'profilePage.savePlayerProfile')}
               </button>
             </form>
 
             <div className="rounded-[1.75rem] border border-slate-200 bg-white p-6">
-              <h2 className="display-title text-2xl text-[#0F172A]">My Matches</h2>
-              <p className="mt-2 text-sm text-slate-500">Only matches that include your player profile are listed here.</p>
+              <h2 className="display-title text-2xl text-[#0F172A]">{t(locale, 'profilePage.myMatches')}</h2>
+              <p className="mt-2 text-sm text-slate-500">{t(locale, 'profilePage.myMatchesHint')}</p>
               <div className="mt-6">
                 <MatchResultsList matches={matchSummary} resolvePlayerName={resolvePlayerName} />
               </div>

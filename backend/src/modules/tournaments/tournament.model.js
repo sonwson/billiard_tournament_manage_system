@@ -1,5 +1,6 @@
 const { mongoose } = require('../../config/db');
 const { createAuditFields } = require('../../common/utils/auditFields');
+const { SKILL_LEVELS } = require('../../common/constants/skillLevel');
 
 const PrizeSchema = new mongoose.Schema({
   position: { type: Number, required: true },
@@ -62,7 +63,7 @@ const TournamentSchema = new mongoose.Schema({
   managerAdminIds: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: [] },
   championsBySkillLevel: {
     type: [{
-      skillLevel: { type: String, enum: ['beginner', 'intermediate', 'advanced'], required: true },
+      skillLevel: { type: String, enum: SKILL_LEVELS, required: true },
       playerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', required: true },
     }],
     default: [],

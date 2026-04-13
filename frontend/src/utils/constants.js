@@ -19,19 +19,27 @@ export const NAV_ITEMS = [
 export const EVENT_TABS = ['Info', 'Matches', 'Ranking', 'Players']
 
 export const SKILL_LEVEL_OPTIONS = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
+  { value: 'CN', label: 'CN' },
+  { value: 'A', label: 'A' },
+  { value: 'B', label: 'B' },
+  { value: 'C', label: 'C' },
+  { value: 'D', label: 'D' },
+  { value: 'E', label: 'E' },
+  { value: 'F', label: 'F' },
+  { value: 'G', label: 'G' },
+  { value: 'H', label: 'H' },
+  { value: 'I', label: 'I' },
+  { value: 'K', label: 'K' },
 ]
 
 export const TOURNAMENT_FORMAT_OPTIONS = [
-  { value: 'single_elimination', label: 'Loại trực tiếp' },
-  { value: 'double_elimination', label: '2 mạng nhánh thắng/thua' },
-  { value: 'round_robin', label: 'Vòng tròn' },
-  { value: 'group_knockout', label: 'Vòng bảng + loại trực tiếp' },
+  { value: 'single_elimination', label: 'Single Elimination' },
+  { value: 'double_elimination', label: 'Double Elimination' },
+  { value: 'round_robin', label: 'Round Robin' },
+  { value: 'group_knockout', label: 'Group Stage + Knockout' },
 ]
 
 export const RANKING_VIEW_OPTIONS = [
-  { value: 'points', label: 'Ranking Theo Điểm' },
-  { value: 'prizeMoney', label: 'Ranking Theo Tiền Thưởng' },
+  { value: 'points', label: 'Rank by Points' },
+  { value: 'prizeMoney', label: 'Rank by Prize Money' },
 ]

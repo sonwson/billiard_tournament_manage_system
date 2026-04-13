@@ -31,11 +31,7 @@ export function formatMatchTime(value) {
 
 export function formatSkillLevel(value) {
   if (!value) return 'Open'
-
   return value
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
 }
 
 export function getStatusTone(status) {

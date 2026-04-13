@@ -36,7 +36,7 @@ function stageLabel(totalRounds, roundNumber) {
 }
 
 function formatSkillLevelLabel(skillLevel) {
-  return skillLevel.charAt(0).toUpperCase() + skillLevel.slice(1);
+  return skillLevel || 'Open';
 }
 
 function formatKnockoutRoundLabel(fieldSize) {

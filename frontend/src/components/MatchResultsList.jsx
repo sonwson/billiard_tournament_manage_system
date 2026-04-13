@@ -1,5 +1,4 @@
 ﻿import { useAppStore } from '../store/appStore'
-import { formatSkillLevel } from '../utils/formatters'
 import { formatBracketRound } from '../utils/matchLabels'
 import { t } from '../utils/i18n'
 
@@ -45,8 +44,8 @@ function compareMatchesByTable(left, right) {
   return (left.matchNumber || 0) - (right.matchNumber || 0)
 }
 
-function formatBroadcastTime(value) {
-  if (!value) return 'TBD'
+function formatBroadcastTime(value, locale) {
+  if (!value) return t(locale, 'matchList.tbd')
 
   return new Date(value).toLocaleString('en-GB', {
     month: 'short',
@@ -86,7 +85,7 @@ function MatchResultsList({ matches = [], resolvePlayerName }) {
   if (!entries.length) {
     return (
       <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
-        {t(locale, 'No matches available yet.', 'Chưa có trận đấu nào.')}
+        {t(locale, 'matchList.empty')}
       </div>
     )
   }
@@ -95,22 +94,19 @@ function MatchResultsList({ matches = [], resolvePlayerName }) {
     <div className="space-y-8">
       {entries.map(([key, items]) => {
         const heading = items[0]?.roundLabel || items[0]?.round || formatBracketRound(items[0] || {})
-        const skillLabel = items[0]?.skillLevel ? formatSkillLevel(items[0].skillLevel) : ''
-
         return (
           <div key={key} className="space-y-2">
-            {skillLabel ? (
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#EAB308]">{skillLabel}</p>
-            ) : null}
-
             <div className="rounded-[1rem] bg-[#E13342] px-5 py-3 text-sm font-black uppercase italic tracking-[0.06em] text-white shadow-[0_12px_30px_-20px_rgba(225,51,66,0.9)] [font-family:'Roboto_Condensed','Inter',sans-serif]">
-              {`${heading} - Race to ${items[0]?.raceTo || '-'}`}
+              {`${heading} - ${t(locale, 'matchList.raceTo')} ${items[0]?.raceTo || '-'}`}
             </div>
 
             <div className="space-y-1.5">
               {items.map((match) => {
-                const player1Name = resolvePlayerName(match.player1Id, match.player1Name)
-                const player2Name = resolvePlayerName(match.player2Id, match.player2Name)
+                const skillSuffix = match.skillLevel ? ` - ${t(locale, `skillLevels.${match.skillLevel}`)}` : ''
+                const resolvedPlayer1Name = resolvePlayerName(match.player1Id, match.player1Name)
+                const resolvedPlayer2Name = resolvePlayerName(match.player2Id, match.player2Name)
+                const player1Name = resolvedPlayer1Name && resolvedPlayer1Name !== t(locale, 'matchList.tbd') ? `${resolvedPlayer1Name}${skillSuffix}` : resolvedPlayer1Name
+                const player2Name = resolvedPlayer2Name && resolvedPlayer2Name !== t(locale, 'matchList.tbd') ? `${resolvedPlayer2Name}${skillSuffix}` : resolvedPlayer2Name
                 const player1Won = String(match.winnerPlayerId || '') === String(match.player1Id || '')
                 const player2Won = String(match.winnerPlayerId || '') === String(match.player2Id || '')
                 const isLive = match.status === 'live'
@@ -122,7 +118,7 @@ function MatchResultsList({ matches = [], resolvePlayerName }) {
                     className="grid overflow-hidden rounded-[0.95rem] border border-[#2B3853] bg-[#1C2740] text-white shadow-[0_20px_30px_-24px_rgba(15,23,42,0.9)] md:grid-cols-[62px_minmax(0,1fr)_152px]"
                   >
                     <div className="flex items-center justify-center bg-[#2B3752] px-3 py-4 text-sm font-black uppercase italic tracking-[0.04em] text-[#71809B] [font-family:'Roboto_Condensed','Inter',sans-serif]">
-                      {match.table || 'TBD'}
+                      {match.table || t(locale, 'matchList.tbd')}
                     </div>
 
                     <div className="flex min-w-0 items-center justify-center px-4 py-4">
@@ -133,7 +129,7 @@ function MatchResultsList({ matches = [], resolvePlayerName }) {
                         <div className={`text-center text-[1.9rem] font-black italic leading-none tabular-nums [font-family:'Roboto_Condensed','Inter',sans-serif] ${isFinished && player1Won ? 'text-[#FF4A58]' : 'text-white'}`}>
                           {match.score1}
                         </div>
-                        <div className="text-center text-xs uppercase tracking-[0.18em] text-[#7B8AA7]">vs</div>
+                        <div className="text-center text-xs uppercase tracking-[0.18em] text-[#7B8AA7]">{t(locale, 'matchList.versus')}</div>
                         <div className={`text-center text-[1.9rem] font-black italic leading-none tabular-nums [font-family:'Roboto_Condensed','Inter',sans-serif] ${isFinished && player2Won ? 'text-[#FF4A58]' : 'text-white'}`}>
                           {match.score2}
                         </div>
@@ -144,10 +140,10 @@ function MatchResultsList({ matches = [], resolvePlayerName }) {
                     </div>
 
                     <div className="flex flex-col justify-center border-t border-[#2B3853] bg-[#2B3752] px-4 py-3 text-right md:border-t-0 md:border-l">
-                      <span className="text-xs font-medium text-[#8EA0BF]">{formatBroadcastTime(match.scheduledAt)}</span>
+                      <span className="text-xs font-medium text-[#8EA0BF]">{formatBroadcastTime(match.scheduledAt, locale)}</span>
                       <span className="mt-1 text-xs font-semibold text-[#7D90AF]">#{match.matchNumber || '-'}</span>
                       <span className={`mt-1 text-[11px] font-bold uppercase tracking-[0.18em] ${isLive ? 'text-[#FF707B]' : 'text-[#8EA0BF]'}`}>
-                        {match.status}
+                        {t(locale, 'status.' + match.status)}
                       </span>
                     </div>
                   </article>

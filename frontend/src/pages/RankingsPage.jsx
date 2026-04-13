@@ -14,12 +14,12 @@ function RankingsPage() {
   return (
     <section className="page-shell py-10">
       <SectionHeader
-        eyebrow={t(locale, 'Race To The Top', 'Cuộc đua dẫn đầu')}
-        title={t(locale, 'Player Rankings', 'Bảng xếp hạng cơ thủ')}
-        description={t(locale, 'A broadcast-style leaderboard with a dominant top section and compact rows for the chasing pack.', 'Bảng xếp hạng phong cách broadcast với nhóm dẫn đầu nổi bật và các hàng phía dưới gọn, dễ theo dõi.')}
+        eyebrow={t(locale, 'rankingsPage.eyebrow')}
+        title={t(locale, 'rankingsPage.title')}
+        description={t(locale, 'rankingsPage.description')}
       />
 
-      {loading ? <p className="text-sm text-slate-500">{t(locale, 'Loading rankings...', 'Đang tải bảng xếp hạng...')}</p> : null}
+      {loading ? <p className="text-sm text-slate-500">{t(locale, 'rankingsPage.loading')}</p> : null}
       {error ? <p className="text-sm font-medium text-red-600">{error.message}</p> : null}
 
       <RankingLeaderboard players={players || []} />

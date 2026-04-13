@@ -6,7 +6,7 @@ export function formatBracketRound(match = {}) {
 
   if (roundLabel) {
     return roundLabel
-      .replace(/^(beginner|intermediate|advanced|pro)\s+/i, '')
+      .replace(/^(CN|A|B|C|D|E|F|G|H|I|K)\s+/i, '')
       .trim()
   }
 

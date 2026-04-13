@@ -1,6 +1,6 @@
 import { CalendarDays, GitBranch, List, MapPin, Trophy, Users } from 'lucide-react'
 import { Navigate, useParams } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import BracketBoard from '../components/BracketBoard'
 import EventTabs from '../components/EventTabs'
 import MatchResultsList from '../components/MatchResultsList'
@@ -9,10 +9,11 @@ import RankingLeaderboard from '../components/RankingLeaderboard'
 import HeroBanner from '../components/ui/HeroBanner'
 import SectionHeader from '../components/ui/SectionHeader'
 import { useEventData } from '../hooks/useEventData'
-import { useAppStore } from '../store/appStore'
 import { tournamentService } from '../services/api'
+import { useAppStore } from '../store/appStore'
 import { EVENT_TABS, SKILL_LEVEL_OPTIONS } from '../utils/uiConstants'
 import { formatCurrency, formatDateRange } from '../utils/formatters'
+import { t } from '../utils/i18n'
 import { formatKnockoutStartLabel } from '../utils/tournamentLabels'
 
 function EventDetailPage() {
@@ -21,10 +22,11 @@ function EventDetailPage() {
   const activeEventTab = useAppStore((state) => state.activeEventTab)
   const setActiveEventTab = useAppStore((state) => state.setActiveEventTab)
   const auth = useAppStore((state) => state.auth)
+  const locale = useAppStore((state) => state.locale)
   const accessToken = auth.accessToken
   const [registering, setRegistering] = useState(false)
   const [registerError, setRegisterError] = useState(null)
-  const [skillLevel, setSkillLevel] = useState('beginner')
+  const [skillLevel, setSkillLevel] = useState('CN')
   const [matchView, setMatchView] = useState('list')
   const [matchScope, setMatchScope] = useState('all')
 
@@ -35,10 +37,9 @@ function EventDetailPage() {
     setRegisterError(null)
     try {
       await tournamentService.register(eventId, { skillLevel })
-      // Refresh the event data or show success
-      window.location.reload() // Simple refresh for now
-    } catch (error) {
-      setRegisterError(error.message || 'Registration failed')
+      window.location.reload()
+    } catch (caughtError) {
+      setRegisterError(caughtError.message || t(locale, 'eventDetail.registrationFailed'))
     } finally {
       setRegistering(false)
     }
@@ -46,10 +47,23 @@ function EventDetailPage() {
 
   const rankedPlayers = eventPlayers.slice().sort((left, right) => left.ranking - right.ranking)
   const resolvePlayerName = (playerId, fallbackName) =>
-    eventPlayers.find((player) => player.id === playerId)?.name || fallbackName || 'TBD'
+    eventPlayers.find((player) => player.id === playerId)?.name || fallbackName || t(locale, 'matchList.tbd')
   const isDoubleElimination = event?.rawFormat === 'double_elimination'
   const myPlayerId = auth.user?.playerId || null
   const myMatches = eventMatches.filter((match) => [String(match.player1Id || ''), String(match.player2Id || '')].includes(String(myPlayerId || '')))
+
+  const eventClassLabel = useMemo(() => {
+    if (!event) return ''
+    return [
+      event.eventType ? t(locale, `tournamentForm.options.eventTypes.${event.eventType}`) : '',
+      event.tier ? t(locale, `tournamentForm.options.tiers.${event.tier}`) : '',
+    ].filter(Boolean).join(' ')
+  }, [event, locale])
+
+  const eventFormatLabel = useMemo(() => {
+    if (!event) return ''
+    return event.rawFormat ? t(locale, `tournamentForm.options.formats.${event.rawFormat}`) : event.format
+  }, [event, locale])
 
   useEffect(() => {
     if (!myPlayerId) {
@@ -74,8 +88,8 @@ function EventDetailPage() {
   if (loading || !event) {
     return (
       <section className="page-shell py-20">
-        <p className={`text-sm ${error ? 'font-medium text-red-600' : 'text-slate-500'}`}> 
-          {error ? error.message : 'Loading event details...'}
+        <p className={`text-sm ${error ? 'font-medium text-red-600' : 'text-slate-500'}`}>
+          {error ? error.message : t(locale, 'eventDetail.loading')}
         </p>
       </section>
     )
@@ -89,65 +103,65 @@ function EventDetailPage() {
         <div className="glass-panel rounded-[2rem] p-6 sm:p-8">
           <div className="grid gap-8 2xl:grid-cols-[minmax(0,1.7fr)_minmax(360px,0.95fr)]">
             <div>
-              <SectionHeader eyebrow="Event Overview" title={event.name} description={event.overview} />
+              <SectionHeader eyebrow={t(locale, 'eventDetail.overview')} title={event.name} description={event.overview} />
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 <div className="rounded-3xl bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Venue</p>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{t(locale, 'eventDetail.venue')}</p>
                   <p className="mt-2 flex items-center gap-2 font-semibold text-slate-900">
                     <MapPin className="h-4 w-4 text-[#EAB308]" />
                     {event.venue}
                   </p>
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Dates</p>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{t(locale, 'eventDetail.dates')}</p>
                   <p className="mt-2 flex items-center gap-2 font-semibold text-slate-900">
                     <CalendarDays className="h-4 w-4 text-[#EAB308]" />
                     {formatDateRange(event.startDate, event.endDate)}
                   </p>
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Prize Fund</p>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{t(locale, 'eventDetail.prizeFund')}</p>
                   <p className="mt-2 flex items-center gap-2 font-semibold text-slate-900">
                     <Trophy className="h-4 w-4 text-[#EAB308]" />
                     {formatCurrency(event.prizeFund)}
                   </p>
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Players</p>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{t(locale, 'eventDetail.players')}</p>
                   <p className="mt-2 flex items-center gap-2 font-semibold text-slate-900">
                     <Users className="h-4 w-4 text-[#EAB308]" />
-                    {event.currentPlayerCount}/{event.fieldSize} Players
+                    {event.currentPlayerCount}/{event.fieldSize} {t(locale, 'eventDetail.players')}
                   </p>
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Event Class</p>
-                  <p className="mt-2 font-semibold text-slate-900">{event.eventClassLabel}</p>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{t(locale, 'eventDetail.eventClass')}</p>
+                  <p className="mt-2 font-semibold text-slate-900">{eventClassLabel}</p>
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-4 lg:col-span-2">
-                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Format</p>
-                  <p className="mt-2 font-semibold text-slate-900">{event.format}</p>
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{t(locale, 'eventDetail.format')}</p>
+                  <p className="mt-2 font-semibold text-slate-900">{eventFormatLabel}</p>
                   {isDoubleElimination ? (
                     <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                      <span className="rounded-full bg-slate-200 px-3 py-1 text-slate-700">Knockout: {formatKnockoutStartLabel(event.bracketSettings?.knockoutStartSize)}</span>
-                      <span className="rounded-full bg-slate-200 px-3 py-1 text-slate-700">Winner + Loser Qualifiers</span>
+                      <span className="rounded-full bg-slate-200 px-3 py-1 text-slate-700">{t(locale, 'eventDetail.knockout')}: {formatKnockoutStartLabel(event.bracketSettings?.knockoutStartSize)}</span>
+                      <span className="rounded-full bg-slate-200 px-3 py-1 text-slate-700">{t(locale, 'eventDetail.winnerLoserQualifiers')}</span>
                     </div>
                   ) : null}
                 </div>
               </div>
 
-              {accessToken && event.status === 'open_registration' && (
+              {accessToken && event.status === 'open_registration' ? (
                 <div className="mt-6">
                   <label className="mb-3 block">
-                    <span className="mb-2 block text-sm font-semibold text-slate-700">Temporary Skill Level For This Tournament</span>
+                    <span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'eventDetail.temporarySkillLevel')}</span>
                     <select
                       className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-medium text-slate-700"
                       value={skillLevel}
-                      onChange={(event) => setSkillLevel(event.target.value)}
+                      onChange={(eventOption) => setSkillLevel(eventOption.target.value)}
                     >
                       {SKILL_LEVEL_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.label}
+                          {t(locale, `skillLevels.${option.value}`)}
                         </option>
                       ))}
                     </select>
@@ -157,34 +171,42 @@ function EventDetailPage() {
                     disabled={registering}
                     className="inline-flex w-full items-center justify-center rounded-full bg-[#0F172A] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#14213D] disabled:opacity-50"
                   >
-                    {registering ? 'Registering...' : 'Register for Tournament'}
+                    {registering ? t(locale, 'eventDetail.registering') : t(locale, 'eventDetail.registerForTournament')}
                   </button>
-                  {registerError && (
+                  {registerError ? (
                     <p className="mt-2 text-sm font-medium text-red-600">{registerError}</p>
-                  )}
+                  ) : null}
                 </div>
-              )}
+              ) : null}
             </div>
 
             <div className="rounded-[1.75rem] bg-[#0F172A] p-6 text-white">
-              <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#EAB308]">Prize Breakdown</p>
+              <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#EAB308]">{t(locale, 'eventDetail.prizeBreakdown')}</p>
               <div className="mt-6 space-y-3">
-                {event.prizeBreakdown.map((item) => (
-                  <div key={`${item.label}-${item.payoutCount || 1}`} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-semibold text-white">{item.label}</p>
-                        <p className="mt-1 text-sm text-slate-300">
-                          {item.payoutCount || 1} {(item.payoutCount || 1) > 1 ? 'players' : 'player'} - {formatCurrency(item.perPlayerAmount || item.amount || 0)} each
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Total</p>
-                        <p className="mt-1 font-bold text-white">{formatCurrency(item.totalAmount || item.amount || 0)}</p>
+                {event.prizeBreakdown.map((item) => {
+                  const payoutCount = item.payoutCount || 1
+                  const playerLabel = payoutCount > 1 ? t(locale, 'eventDetail.multiplePlayers') : t(locale, 'eventDetail.singlePlayer')
+                  return (
+                    <div key={`${item.label}-${item.payoutCount || 1}`} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-white">{item.label}</p>
+                          <p className="mt-1 text-sm text-slate-300">
+                            {t(locale, 'eventDetail.playerEach', {
+                              count: payoutCount,
+                              label: playerLabel,
+                              amount: formatCurrency(item.perPlayerAmount || item.amount || 0),
+                            })}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{t(locale, 'eventDetail.total')}</p>
+                          <p className="mt-1 font-bold text-white">{formatCurrency(item.totalAmount || item.amount || 0)}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -199,33 +221,38 @@ function EventDetailPage() {
         {activeEventTab === 'Info' ? (
           <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
             <div className="rounded-[1.75rem] border border-slate-200 bg-white p-6">
-              <h3 className="display-title text-3xl text-[#0F172A]">Tournament Notes</h3>
+              <h3 className="display-title text-3xl text-[#0F172A]">{t(locale, 'eventDetail.tournamentNotes')}</h3>
               <div className="mt-5 space-y-4 text-sm leading-7 text-slate-600">
+                <p>{t(locale, 'eventDetail.notesIntro')}</p>
                 <p>
-                  This event uses a polished tournament presentation with broadcast-style match cards and clear player, ranking, and bracket surfacing.
-                </p>
-                <p>
-                  Players: {event.currentPlayerCount}/{event.fieldSize}, {event.tableCount} competition tables, format: {event.format}.
+                  {t(locale, 'eventDetail.notesPlayers', {
+                    current: event.currentPlayerCount,
+                    total: event.fieldSize,
+                    tables: event.tableCount,
+                    format: eventFormatLabel,
+                  })}
                 </p>
                 {isDoubleElimination ? (
                   <p>
-                    Double elimination qualifier: winner-side players qualify directly into the knockout bracket, one-loss players can still qualify from the loser side, and a second loss means elimination. Knockout starts from {formatKnockoutStartLabel(event.bracketSettings?.knockoutStartSize)}.
+                    {t(locale, 'eventDetail.notesDoubleElimination', {
+                      label: formatKnockoutStartLabel(event.bracketSettings?.knockoutStartSize),
+                    })}
                   </p>
                 ) : null}
                 {event.tableCount ? (
                   <p>
-                    Competition tables: {event.tableCount}
-                    {event.tvTableCount ? `, livestream tables: ${event.tvTableCount}` : ''}.
+                    {t(locale, 'eventDetail.notesTables', {
+                      tables: event.tableCount,
+                      tvPart: event.tvTableCount ? t(locale, 'eventDetail.notesTvPart', { count: event.tvTableCount }) : '',
+                    })}
                   </p>
                 ) : null}
-                <p>
-                  This page now reads directly from the real backend API and handles empty database states cleanly.
-                </p>
+                <p>{t(locale, 'eventDetail.notesApi')}</p>
               </div>
             </div>
 
             <div className="rounded-[1.75rem] border border-slate-200 bg-white p-6">
-              <h3 className="display-title text-3xl text-[#0F172A]">Key Players</h3>
+              <h3 className="display-title text-3xl text-[#0F172A]">{t(locale, 'eventDetail.keyPlayers')}</h3>
               <div className="mt-5 space-y-4">
                 {rankedPlayers.slice(0, 3).map((player) => (
                   <div key={player.id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
@@ -255,7 +282,7 @@ function EventDetailPage() {
                         : 'bg-white text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    My Matches
+                    {t(locale, 'eventDetail.myMatches')}
                   </button>
                   <button
                     type="button"
@@ -266,7 +293,7 @@ function EventDetailPage() {
                         : 'bg-white text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    All Matches
+                    {t(locale, 'eventDetail.allMatches')}
                   </button>
                 </>
               ) : null}
@@ -280,7 +307,7 @@ function EventDetailPage() {
                 }`}
               >
                 <List className="h-4 w-4" />
-                Match List
+                {t(locale, 'eventDetail.matchList')}
               </button>
               <button
                 type="button"
@@ -292,7 +319,7 @@ function EventDetailPage() {
                 }`}
               >
                 <GitBranch className="h-4 w-4" />
-                Bracket
+                {t(locale, 'eventDetail.bracket')}
               </button>
             </div>
 
@@ -304,9 +331,7 @@ function EventDetailPage() {
           </div>
         ) : null}
 
-        {activeEventTab === 'Ranking' ? (
-          <RankingLeaderboard players={rankedPlayers} />
-        ) : null}
+        {activeEventTab === 'Ranking' ? <RankingLeaderboard players={rankedPlayers} /> : null}
 
         {activeEventTab === 'Players' ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -321,9 +346,3 @@ function EventDetailPage() {
 }
 
 export default EventDetailPage
-
-
-
-
-
-

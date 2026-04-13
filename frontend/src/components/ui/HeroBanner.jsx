@@ -44,18 +44,18 @@ function HeroBanner({ event, compact = false }) {
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <div className="rounded-3xl border border-white/18 bg-[#0F172A]/52 p-4 text-white shadow-[0_18px_45px_-30px_rgba(15,23,42,0.9)] backdrop-blur-md">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-slate-300/90">{t(locale, 'Location', 'Địa điểm')}</p>
+                <p className="text-[11px] uppercase tracking-[0.28em] text-slate-300/90">{t(locale, 'heroBanner.location')}</p>
                 <p className="mt-2 flex items-center gap-2 text-lg font-semibold text-white">
                   <MapPin className="h-4 w-4 text-[#EAB308]" />
                   {event.location}
                 </p>
               </div>
               <div className="rounded-3xl border border-white/18 bg-[#14213D]/58 p-4 text-white shadow-[0_18px_45px_-30px_rgba(15,23,42,0.9)] backdrop-blur-md">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-slate-300/90">{t(locale, 'Dates', 'Thời gian')}</p>
+                <p className="text-[11px] uppercase tracking-[0.28em] text-slate-300/90">{t(locale, 'heroBanner.dates')}</p>
                 <p className="mt-2 text-lg font-semibold text-white">{formatDateRange(event.startDate, event.endDate)}</p>
               </div>
               <div className="rounded-3xl border border-[#EAB308]/28 bg-[linear-gradient(135deg,rgba(20,33,61,0.78),rgba(15,23,42,0.58))] p-4 text-white shadow-[0_20px_50px_-30px_rgba(234,179,8,0.45)] backdrop-blur-md">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-[#F8E7A1]">{t(locale, 'Prize Fund', 'Quỹ thưởng')}</p>
+                <p className="text-[11px] uppercase tracking-[0.28em] text-[#F8E7A1]">{t(locale, 'heroBanner.prizeFund')}</p>
                 <p className="mt-2 flex items-center gap-2 text-lg font-semibold text-white">
                   <Trophy className="h-4 w-4 text-[#EAB308]" />
                   {formatCurrency(event.prizeFund)}
@@ -68,7 +68,7 @@ function HeroBanner({ event, compact = false }) {
                 to={`/events/${event.id}`}
                 className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#EAB308] px-6 py-3 text-sm font-bold text-[#0F172A] transition hover:bg-[#f3c623]"
               >
-                {t(locale, 'View Event Details', 'Xem chi tiết giải')}
+                {t(locale, 'heroBanner.viewEventDetails')}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             ) : null}

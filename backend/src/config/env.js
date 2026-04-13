@@ -21,6 +21,8 @@ const env = {
   adminName: process.env.ADMIN_NAME || 'CueScore Admin',
   mail: {
     from: process.env.MAIL_FROM || 'no-reply@billiardhub.local',
+    provider: process.env.MAIL_PROVIDER || '',
+    resendApiKey: process.env.RESEND_API_KEY || '',
     host: process.env.SMTP_HOST || '',
     port: Number(process.env.SMTP_PORT) || 587,
     secure: process.env.SMTP_SECURE === 'true',

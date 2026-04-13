@@ -1,4 +1,5 @@
 const { z } = require('zod');
+const { SKILL_LEVELS } = require('../../common/constants/skillLevel');
 
 const imageString = z.string().refine((value) => /^(https?:\/\/|data:image\/)/.test(value), {
   message: 'Invalid image URL',
@@ -16,7 +17,7 @@ const createPlayerSchema = z.object({
     gender: z.enum(['male', 'female', 'other']).optional().nullable(),
     club: z.string().max(120).optional().nullable(),
     city: z.string().max(120).optional().nullable(),
-    skillLevel: z.enum(['beginner', 'intermediate', 'advanced', 'pro']).optional(),
+    skillLevel: z.enum(SKILL_LEVELS).optional(),
     status: z.enum(['active', 'inactive', 'banned']).optional(),
   }),
   params: z.object({}).passthrough(),
@@ -33,7 +34,7 @@ const bulkCreatePlayersSchema = z.object({
       gender: z.enum(['male', 'female', 'other']).optional().nullable(),
       club: z.string().max(120).optional().nullable(),
       city: z.string().max(120).optional().nullable(),
-      skillLevel: z.enum(['beginner', 'intermediate', 'advanced', 'pro']).optional(),
+      skillLevel: z.enum(SKILL_LEVELS).optional(),
       status: z.enum(['active', 'inactive', 'banned']).optional(),
     })).min(1).max(200),
   }),
@@ -81,7 +82,7 @@ const updatePlayerSchema = z.object({
     gender: z.enum(['male', 'female', 'other']).optional().nullable(),
     club: z.string().max(120).optional().nullable(),
     city: z.string().max(120).optional().nullable(),
-    skillLevel: z.enum(['beginner', 'intermediate', 'advanced', 'pro']).optional(),
+    skillLevel: z.enum(SKILL_LEVELS).optional(),
     status: z.enum(['active', 'inactive', 'banned']).optional(),
   }).refine((value) => Object.keys(value).length > 0, {
     message: 'At least one field is required',
@@ -102,7 +103,7 @@ const updateMyPlayerSchema = z.object({
     gender: z.enum(['male', 'female', 'other']).optional().nullable(),
     club: z.string().max(120).optional().nullable(),
     city: z.string().max(120).optional().nullable(),
-    skillLevel: z.enum(['beginner', 'intermediate', 'advanced', 'pro']).optional(),
+    skillLevel: z.enum(SKILL_LEVELS).optional(),
   }).refine((value) => Object.keys(value).length > 0, {
     message: 'At least one field is required',
   }),

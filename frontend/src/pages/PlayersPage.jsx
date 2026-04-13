@@ -36,11 +36,7 @@ function PlayersPage() {
 
     try {
       const confirmed = window.confirm(
-        t(
-          locale,
-          `Delete ${selectedPlayers.length} selected player${selectedPlayers.length > 1 ? 's' : ''} permanently?`,
-          `Xóa vĩnh viễn ${selectedPlayers.length} cơ thủ đã chọn?`,
-        ),
+        t(locale, 'playersPage.deleteConfirm', { count: selectedPlayers.length }),
       )
 
       if (!confirmed) {
@@ -52,7 +48,7 @@ function PlayersPage() {
       setData((current) => (current || []).filter((item) => !selectedPlayerIds.includes(item.id)))
       setSelectedPlayerIds([])
     } catch (caughtError) {
-      setActionError(caughtError.message || 'Unable to delete selected players')
+      setActionError(caughtError.message || t(locale, 'playersPage.deleteFailed'))
     } finally {
       setBusyPlayerIds([])
     }
@@ -61,23 +57,23 @@ function PlayersPage() {
   return (
     <section className="page-shell py-10">
       <SectionHeader
-        eyebrow={t(locale, 'Player Directory', 'Danh sách cơ thủ')}
-        title={t(locale, 'Player Profiles', 'Hồ sơ cơ thủ')}
-        description={t(locale, 'A flexible player grid ready for real avatars, nationality flags, ranking points, and future profile drill-downs.', 'Lưới cơ thủ linh hoạt, sẵn sàng cho avatar thật, quốc tịch, điểm xếp hạng và trang hồ sơ chi tiết về sau.')}
+        eyebrow={t(locale, 'playersPage.eyebrow')}
+        title={t(locale, 'playersPage.title')}
+        description={t(locale, 'playersPage.description')}
       />
 
-      {loading ? <p className="text-sm text-slate-500">{t(locale, 'Loading players...', 'Đang tải cơ thủ...')}</p> : null}
+      {loading ? <p className="text-sm text-slate-500">{t(locale, 'playersPage.loading')}</p> : null}
       {error ? <p className="text-sm font-medium text-red-600">{error.message}</p> : null}
       {actionError ? <p className="text-sm font-medium text-red-600">{actionError}</p> : null}
 
       {isSuperAdmin ? (
         <div className="mb-6 flex flex-col gap-3 rounded-[1.5rem] border border-slate-200 bg-white/90 p-4 shadow-sm md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-slate-400">Bulk Actions</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-slate-400">{t(locale, 'playersPage.bulkActions')}</p>
             <p className="mt-1 text-sm font-medium text-slate-600">
               {selectedPlayerIds.length
-                ? t(locale, `${selectedPlayerIds.length} player${selectedPlayerIds.length > 1 ? 's' : ''} selected`, `Đã chọn ${selectedPlayerIds.length} cơ thủ`)
-                : t(locale, 'Click directly on player cards to select them for bulk delete.', 'Bấm trực tiếp vào thẻ cơ thủ để chọn xóa hàng loạt.')}
+                ? t(locale, 'playersPage.selectedCount', { count: selectedPlayerIds.length })
+                : t(locale, 'playersPage.selectHint')}
             </p>
           </div>
 
@@ -88,7 +84,7 @@ function PlayersPage() {
               onClick={handleSelectAllPlayers}
               className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-500 transition hover:border-slate-300 hover:text-slate-700 disabled:opacity-50"
             >
-              {t(locale, 'Select All', 'Chọn tất cả')}
+              {t(locale, 'playersPage.selectAll')}
             </button>
 
             <button
@@ -97,7 +93,7 @@ function PlayersPage() {
               onClick={() => setSelectedPlayerIds([])}
               className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-500 transition hover:border-slate-300 hover:text-slate-700 disabled:opacity-50"
             >
-              {t(locale, 'Clear Selection', 'Bỏ chọn')}
+              {t(locale, 'playersPage.clearSelection')}
             </button>
 
             <button
@@ -107,8 +103,8 @@ function PlayersPage() {
               className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
             >
               {busyPlayerIds.length > 0
-                ? t(locale, 'Deleting...', 'Đang xóa...')
-                : t(locale, `Delete Selected${selectedPlayerIds.length ? ` (${selectedPlayerIds.length})` : ''}`, `Xóa mục đã chọn${selectedPlayerIds.length ? ` (${selectedPlayerIds.length})` : ''}`)}
+                ? t(locale, 'playersPage.deleting')
+                : t(locale, 'playersPage.deleteSelected', { count: selectedPlayerIds.length })}
             </button>
           </div>
         </div>

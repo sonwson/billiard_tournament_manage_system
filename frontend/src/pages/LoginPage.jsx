@@ -1,4 +1,4 @@
-﻿import { ArrowRight, LockKeyhole, Mail } from 'lucide-react'
+import { ArrowRight, LockKeyhole, Mail } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { authService } from '../services/api'
@@ -26,8 +26,8 @@ function LoginPage() {
       setAuth(response.data)
       pushToast({
         type: 'success',
-        title: t(locale, 'Welcome back', 'Chào mừng trở lại'),
-        message: t(locale, 'You have signed in successfully.', 'Bạn đã đăng nhập thành công.'),
+        title: t(locale, 'loginPage.toastWelcome'),
+        message: t(locale, 'loginPage.toastWelcomeMessage'),
       })
 
       const redirectTo = ['admin', 'super_admin', 'tournament_admin'].includes(response.data.user?.role)
@@ -38,8 +38,8 @@ function LoginPage() {
     } catch (caughtError) {
       pushToast({
         type: 'error',
-        title: t(locale, 'Login failed', 'Đăng nhập thất bại'),
-        message: caughtError.message || t(locale, 'Unable to login right now.', 'Hiện chưa thể đăng nhập.'),
+        title: t(locale, 'loginPage.toastFailed'),
+        message: caughtError.message || t(locale, 'loginPage.toastFailedMessage'),
       })
     } finally {
       setSubmitting(false)
@@ -59,34 +59,30 @@ function LoginPage() {
         <div className="grid w-full gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="hidden lg:block">
             <p className="text-sm font-bold uppercase tracking-[0.34em] text-[#EAB308]">
-              {t(locale, 'Tournament Control', 'Điều hành giải đấu')}
+              {t(locale, 'loginPage.eyebrow')}
             </p>
             <h1 className="display-title mt-5 text-7xl leading-none text-white">
-              {t(locale, 'Log In To', 'Đăng nhập vào')}
+              {t(locale, 'loginPage.heroLine1')}
               <br />
               BilliardHub
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">
-              {t(
-                locale,
-                'Manage your player account, follow live scores, and stay on top of rankings and event registration windows.',
-                'Quản lý tài khoản cơ thủ, theo dõi tỷ số trực tiếp và cập nhật bảng xếp hạng cũng như thời gian mở đăng ký giải đấu.',
-              )}
+              {t(locale, 'loginPage.heroDescription')}
             </p>
           </div>
 
           <div className="glass-panel mx-auto w-full max-w-xl rounded-[2rem] p-6 sm:p-8">
             <div className="mb-8">
               <p className="text-sm font-bold uppercase tracking-[0.34em] text-[#EAB308]">
-                {t(locale, 'Welcome Back', 'Chào mừng trở lại')}
+                {t(locale, 'loginPage.welcomeBack')}
               </p>
-              <h2 className="display-title mt-3 text-4xl text-[#0F172A]">{t(locale, 'Sign In', 'Đăng nhập')}</h2>
+              <h2 className="display-title mt-3 text-4xl text-[#0F172A]">{t(locale, 'loginPage.signIn')}</h2>
             </div>
 
             <form className="space-y-4" onSubmit={handleSubmit}>
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-slate-700">
-                  {t(locale, 'Email or phone', 'Email hoặc số điện thoại')}
+                  {t(locale, 'loginPage.emailOrPhone')}
                 </span>
                 <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
                   <Mail className="h-5 w-5 text-slate-400" />
@@ -101,7 +97,7 @@ function LoginPage() {
               </label>
 
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'Password', 'Mật khẩu')}</span>
+                <span className="mb-2 block text-sm font-semibold text-slate-700">{t(locale, 'loginPage.password')}</span>
                 <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
                   <LockKeyhole className="h-5 w-5 text-slate-400" />
                   <input
@@ -116,10 +112,10 @@ function LoginPage() {
 
               <div className="flex items-center justify-between text-sm">
                 <Link to="/register" className="font-semibold text-slate-500 transition hover:text-[#0F172A]">
-                  {t(locale, 'Need an account?', 'Chưa có tài khoản?')}
+                  {t(locale, 'loginPage.needAccount')}
                 </Link>
                 <Link to="/forgot-password" className="font-semibold text-[#14213D]">
-                  {t(locale, 'Forgot Password', 'Quên mật khẩu')}
+                  {t(locale, 'loginPage.forgotPassword')}
                 </Link>
               </div>
 
@@ -128,7 +124,7 @@ function LoginPage() {
                 disabled={submitting}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#EAB308] px-5 py-4 text-sm font-bold text-[#0F172A] transition hover:bg-[#f3c623] disabled:opacity-70"
               >
-                {submitting ? t(locale, 'Signing In...', 'Đang đăng nhập...') : t(locale, 'Login', 'Đăng nhập')}
+                {submitting ? t(locale, 'loginPage.signingIn') : t(locale, 'loginPage.login')}
                 <ArrowRight className="h-4 w-4" />
               </button>
             </form>

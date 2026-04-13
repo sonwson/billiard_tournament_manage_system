@@ -1,12 +1,14 @@
-import { Minus, Plus, RefreshCw } from 'lucide-react'
+﻿import { Minus, Plus, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import SectionHeader from '../components/ui/SectionHeader'
 import StatusBadge from '../components/ui/StatusBadge'
 import { useAsyncData } from '../hooks/useAsyncData'
 import { matchService, tournamentService } from '../services/api'
+import { useAppStore } from '../store/appStore'
 import { SKILL_LEVEL_OPTIONS } from '../utils/uiConstants'
-import { formatMatchTime, formatSkillLevel } from '../utils/formatters'
+import { formatMatchTime } from '../utils/formatters'
+import { t } from '../utils/i18n'
 
 function getTableSortValue(tableLabel = '') {
   const value = String(tableLabel || '').trim().toUpperCase()
@@ -51,6 +53,7 @@ function compareMatchesByTable(left, right) {
 }
 
 function AdminMatchesPage() {
+  const locale = useAppStore((state) => state.locale)
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedTournamentId = searchParams.get('tournamentId') || ''
   const selectedSkillLevel = searchParams.get('skillLevel') || ''
@@ -226,9 +229,9 @@ function AdminMatchesPage() {
         ...current,
         items: (current?.items || []).map((item) => (item.id === match.id ? { ...item, ...updatedMatch } : item)),
       }))
-      setActionSuccess('Live score updated successfully.')
+      setActionSuccess(t(locale, 'adminMatches.liveScoreUpdated'))
     } catch (caughtError) {
-      setActionError(caughtError.message || 'Unable to update live score')
+      setActionError(caughtError.message || t(locale, 'adminMatches.liveScoreFailed'))
     } finally {
       delete scoreUpdateLocks.current[match.id]
       setBusyMatchId('')
@@ -246,10 +249,10 @@ function AdminMatchesPage() {
     try {
       await matchService.updateResult(match.id, draft)
       await reloadMatches()
-      setActionSuccess(match.status === 'finished' ? 'Score correction saved successfully.' : 'Match finished successfully. The table is ready for the next pairing.')
+      setActionSuccess(match.status === 'finished' ? t(locale, 'adminMatches.scoreCorrectionSaved') : t(locale, 'adminMatches.matchFinished'))
     } catch (caughtError) {
       setActionError(
-        caughtError.message || (match.status === 'finished' ? 'Unable to save score correction' : 'Unable to finish match'),
+        caughtError.message || (match.status === 'finished' ? t(locale, 'adminMatches.correctionFailed') : t(locale, 'adminMatches.finishFailed')),
       )
     } finally {
       setBusyMatchId('')
@@ -277,9 +280,9 @@ function AdminMatchesPage() {
         ...current,
         [response.data.tableNo]: response.data,
       }))
-      setActionSuccess(`Table QR generated for ${response.data.tableNo}.`)
+      setActionSuccess(t(locale, 'adminMatches.qrGenerated', { tableNo: response.data.tableNo }))
     } catch (caughtError) {
-      setActionError(caughtError.message || 'Unable to generate QR access')
+      setActionError(caughtError.message || t(locale, 'adminMatches.qrFailed'))
     } finally {
       setBusyMatchId('')
     }
@@ -301,9 +304,9 @@ function AdminMatchesPage() {
         tableNo: draft.tableNo || null,
       })
       await reloadMatches()
-      setActionSuccess('Match schedule updated successfully.')
+      setActionSuccess(t(locale, 'adminMatches.scheduleUpdated'))
     } catch (caughtError) {
-      setActionError(caughtError.message || 'Unable to update match schedule')
+      setActionError(caughtError.message || t(locale, 'adminMatches.scheduleFailed'))
     } finally {
       setBusyMatchId('')
     }
@@ -313,20 +316,20 @@ function AdminMatchesPage() {
     <div className="space-y-8">
       <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 sm:p-6 lg:p-7">
         <SectionHeader
-          eyebrow="Bracket Control"
-          title="Manage Match Results"
-          description="Review generated brackets by skill level, keep tables moving, and generate QR access by table instead of by individual match."
+          eyebrow={t(locale, 'adminMatches.eyebrow')}
+          title={t(locale, 'adminMatches.title')}
+          description={t(locale, 'adminMatches.description')}
         />
 
         <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_320px]">
           <label className="block min-w-0">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Tournament</span>
+            <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{t(locale, 'adminMatches.tournament')}</span>
             <select
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-medium text-slate-700"
               value={selectedTournamentId}
               onChange={(event) => updateFilter('tournamentId', event.target.value)}
             >
-              <option value="">Select tournament</option>
+              <option value="">{t(locale, 'adminMatches.selectTournament')}</option>
               {(tournaments || []).map((tournament) => (
                 <option key={tournament.id} value={tournament.id}>
                   {tournament.name}
@@ -336,16 +339,16 @@ function AdminMatchesPage() {
           </label>
 
           <label className="block min-w-0">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Skill Bracket</span>
+            <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{t(locale, 'adminMatches.skillBracket')}</span>
             <select
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-medium text-slate-700"
               value={selectedSkillLevel}
               onChange={(event) => updateFilter('skillLevel', event.target.value)}
             >
-              <option value="">All brackets</option>
+              <option value="">{t(locale, 'common.allBrackets')}</option>
               {SKILL_LEVEL_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {t(locale, `skillLevels.${option.value}`)}
                 </option>
               ))}
             </select>
@@ -357,12 +360,12 @@ function AdminMatchesPage() {
       </div>
 
       <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 sm:p-6 lg:p-7">
-        {loading ? <p className="text-sm text-slate-500">Loading matches...</p> : null}
+        {loading ? <p className="text-sm text-slate-500">{t(locale, 'adminMatches.loading')}</p> : null}
         {error ? <p className="text-sm font-medium text-red-600">{error.message}</p> : null}
 
         {!loading && !error && matches.length === 0 ? (
           <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
-            No generated matches for this tournament yet.
+            {t(locale, 'adminMatches.empty')}
           </div>
         ) : null}
 
@@ -372,7 +375,7 @@ function AdminMatchesPage() {
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#EAB308]">
-                    {formatSkillLevel(items[0].skillLevel)}
+                    {t(locale, `skillLevels.${items[0].skillLevel}`)}
                   </p>
                   <h3 className="display-title mt-2 text-2xl text-[#0F172A]">{items[0].round}</h3>
                 </div>
@@ -404,24 +407,24 @@ function AdminMatchesPage() {
                         <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
                           <div className="flex flex-wrap items-center gap-3">
                             <h4 className="text-lg font-bold text-slate-900">{match.bracketLabel}</h4>
-                            <StatusBadge tone={match.status}>{match.status}</StatusBadge>
+                            <StatusBadge tone={match.status}>{t(locale, 'status.' + match.status)}</StatusBadge>
                             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                              {match.rawTableNo || 'Table TBC'}
+                              {match.rawTableNo || t(locale, 'adminMatches.tableTbc')}
                             </span>
                           </div>
                           <p className="mt-3 text-sm text-slate-500">{formatMatchTime(match.scheduledAt)}</p>
                           <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                            <p>Player 1: {match.player1Name || 'Waiting slot'}</p>
-                            <p>Player 2: {match.player2Name || 'Waiting slot'}</p>
-                            <p>Race to {match.raceTo}</p>
-                            <p>{match.rawTableNo ? `Table ${match.rawTableNo} QR stays with the table.` : 'Assign a table to enable QR.'}</p>
+                            <p>{t(locale, 'adminMatches.player1')}: {match.player1Name || t(locale, 'adminMatches.waitingSlot')}</p>
+                            <p>{t(locale, 'adminMatches.player2')}: {match.player2Name || t(locale, 'adminMatches.waitingSlot')}</p>
+                            <p>{t(locale, 'adminMatches.raceTo', { value: match.raceTo })}</p>
+                            <p>{match.rawTableNo ? t(locale, 'adminMatches.tableQrHint') : t(locale, 'adminMatches.assignTableHint')}</p>
                           </div>
                         </div>
 
                         <div className="grid gap-3 sm:grid-cols-2">
                           {[
-                            { label: match.player1Name || 'Player 1', field: 'player1Score', value: draft.player1Score },
-                            { label: match.player2Name || 'Player 2', field: 'player2Score', value: draft.player2Score },
+                            { label: match.player1Name || t(locale, 'adminMatches.player1'), field: 'player1Score', value: draft.player1Score },
+                            { label: match.player2Name || t(locale, 'adminMatches.player2'), field: 'player2Score', value: draft.player2Score },
                           ].map((item) => (
                             <div key={item.field} className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
                               <p className="truncate text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">{item.label}</p>
@@ -452,7 +455,7 @@ function AdminMatchesPage() {
                       <div className="grid min-w-0 content-start gap-3">
                         <div className="grid gap-3 2xl:grid-cols-[minmax(0,1fr)_minmax(220px,0.85fr)]">
                           <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
-                            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Schedule</p>
+                            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">{t(locale, 'adminMatches.schedule')}</p>
                             <div className="mt-3 grid gap-3">
                               <input
                                 type="datetime-local"
@@ -465,7 +468,7 @@ function AdminMatchesPage() {
                                 onChange={(event) => updateScheduleDraft(match.id, 'tableNo', event.target.value)}
                                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#EAB308]"
                               >
-                                <option value="">Unassigned table</option>
+                                <option value="">{t(locale, 'adminMatches.unassignedTable')}</option>
                                 {tableOptions.map((tableNo) => (
                                   <option key={tableNo} value={tableNo}>
                                     {tableNo}
@@ -478,7 +481,7 @@ function AdminMatchesPage() {
                                 onClick={() => handleScheduleSave(match)}
                                 className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
                               >
-                                Save Schedule
+                                {t(locale, 'adminMatches.saveSchedule')}
                               </button>
                             </div>
                           </div>
@@ -486,8 +489,8 @@ function AdminMatchesPage() {
                           <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Table QR</p>
-                                <p className="mt-2 text-sm font-semibold text-slate-700">{match.rawTableNo || 'Assign a table first'}</p>
+                                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">{t(locale, 'adminMatches.tableQr')}</p>
+                                <p className="mt-2 text-sm font-semibold text-slate-700">{match.rawTableNo || t(locale, 'adminMatches.assignTableFirst')}</p>
                               </div>
                               {tableQrPayload && !isCompleted ? (
                                 <img src={tableQrPayload.qrCodeDataUrl} alt="Table QR" className="h-24 w-24 rounded-xl border border-slate-200" />
@@ -500,7 +503,7 @@ function AdminMatchesPage() {
                                 onClick={() => handleQrGenerate(match)}
                                 className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
                               >
-                                Generate Table QR
+                                {t(locale, 'adminMatches.generateTableQr')}
                               </button>
                               {tableQrPayload && !isCompleted ? (
                                 <a
@@ -509,11 +512,11 @@ function AdminMatchesPage() {
                                   rel="noreferrer"
                                   className="inline-flex items-center justify-center rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
                                 >
-                                  Open Table Score Page
+                                  {t(locale, 'adminMatches.openTableScorePage')}
                                 </a>
                               ) : (
                                 <p className="text-xs leading-5 text-slate-500">
-                                  The same QR stays bound to this table and continues with the next assigned match.
+                                  {t(locale, 'adminMatches.tableQrDescription')}
                                 </p>
                               )}
                             </div>
@@ -527,16 +530,16 @@ function AdminMatchesPage() {
                           className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0F172A] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#14213D] disabled:opacity-60"
                         >
                           {busyMatchId === match.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
-                          {isCompleted ? 'Save Score Correction' : 'Finish Match'}
+                          {isCompleted ? t(locale, 'adminMatches.saveScoreCorrection') : t(locale, 'adminMatches.finishMatch')}
                         </button>
 
                         {!isCompleted ? (
                           <p className="text-xs leading-5 text-slate-500">
-                            Live score updates happen in real time. When you finish this match, the same table QR will continue on the next assigned pairing with score reset to 0-0.
+                            {t(locale, 'adminMatches.liveScoreHint')}
                           </p>
                         ) : (
                           <p className="text-xs leading-5 text-slate-500">
-                            Completed matches can still be corrected using the +/- buttons. If the corrected score changes the winner, the update will be rejected.
+                            {t(locale, 'adminMatches.correctionHint')}
                           </p>
                         )}
                       </div>

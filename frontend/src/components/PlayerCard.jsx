@@ -1,7 +1,11 @@
 import { Check, Globe2 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
+import { useAppStore } from '../store/appStore'
+import { t } from '../utils/i18n'
 
 function PlayerCard({ player, selectable = false, selected = false, onSelectToggle }) {
+  const locale = useAppStore((state) => state.locale)
+
   return (
     <article
       role={selectable ? 'button' : undefined}
@@ -31,7 +35,7 @@ function PlayerCard({ player, selectable = false, selected = false, onSelectTogg
             }`}
           >
             {selected ? <Check className="h-3.5 w-3.5" /> : null}
-            {selected ? 'Selected' : 'Select'}
+            {selected ? t(locale, 'playersPage.selected') : t(locale, 'playersPage.select')}
           </div>
         </div>
       ) : null}
@@ -56,11 +60,11 @@ function PlayerCard({ player, selectable = false, selected = false, onSelectTogg
 
       <div className="mt-5 grid grid-cols-2 gap-3">
         <div className="rounded-2xl bg-slate-50 p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Points</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t(locale, 'playersPage.points')}</p>
           <p className="mt-2 text-lg font-bold text-slate-900">{player.points}</p>
         </div>
         <div className="rounded-2xl bg-slate-50 p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Earnings</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t(locale, 'playersPage.earnings')}</p>
           <p className="mt-2 text-lg font-bold text-slate-900">{formatCurrency(player.prizeMoney)}</p>
         </div>
       </div>

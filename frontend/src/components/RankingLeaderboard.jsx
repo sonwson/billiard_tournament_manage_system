@@ -1,9 +1,16 @@
 import { useMemo, useState } from 'react'
-import { RANKING_VIEW_OPTIONS } from '../utils/uiConstants'
+import { useAppStore } from '../store/appStore'
+import { t } from '../utils/i18n'
 import RankingCard from './RankingCard'
 
 function RankingLeaderboard({ players = [], initialMetric = 'points' }) {
   const [metric, setMetric] = useState(initialMetric)
+  const locale = useAppStore((state) => state.locale)
+  const options = [
+    { value: 'points', label: t(locale, 'rankingsPage.byPoints') },
+    { value: 'prizeMoney', label: t(locale, 'rankingsPage.byPrizeMoney') },
+  ]
+
   const sortedPlayers = useMemo(
     () => players.slice().sort((left, right) => {
       const valueRight = metric === 'prizeMoney' ? right.prizeMoney || 0 : right.points || 0
@@ -23,7 +30,7 @@ function RankingLeaderboard({ players = [], initialMetric = 'points' }) {
   if (!sortedPlayers.length) {
     return (
       <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
-        No ranking data available yet.
+        {t(locale, 'rankingsPage.empty')}
       </div>
     )
   }
@@ -31,7 +38,7 @@ function RankingLeaderboard({ players = [], initialMetric = 'points' }) {
   return (
     <>
       <div className="mb-5 flex flex-wrap gap-3">
-        {RANKING_VIEW_OPTIONS.map((option) => {
+        {options.map((option) => {
           const active = option.value === metric
 
           return (

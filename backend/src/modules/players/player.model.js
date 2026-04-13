@@ -1,5 +1,6 @@
 const { mongoose } = require('../../config/db');
 const { createAuditFields } = require('../../common/utils/auditFields');
+const { SKILL_LEVELS } = require('../../common/constants/skillLevel');
 
 const PlayerSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
@@ -12,7 +13,7 @@ const PlayerSchema = new mongoose.Schema({
   gender: { type: String, enum: ['male', 'female', 'other'], default: null },
   club: { type: String, trim: true, default: null, index: true },
   city: { type: String, trim: true, default: null, index: true },
-  skillLevel: { type: String, enum: ['beginner', 'intermediate', 'advanced', 'pro'], default: 'beginner' },
+  skillLevel: { type: String, enum: SKILL_LEVELS, default: 'CN' },
   status: { type: String, enum: ['active', 'inactive', 'banned'], default: 'active', index: true },
   stats: {
     tournamentsPlayed: { type: Number, default: 0 },

@@ -70,7 +70,7 @@ function Header() {
           <div>
             <p className="display-title text-xl leading-none text-[#0F172A]">BilliardHub</p>
             <p className="text-xs font-medium uppercase tracking-[0.32em] text-slate-500">
-              {t(locale, 'Live Tournament', 'Giải đấu trực tiếp')}
+              {t(locale, 'header.liveTournament')}
             </p>
           </div>
         </Link>
@@ -90,14 +90,14 @@ function Header() {
                 to="/login"
                 className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
               >
-                {t(locale, 'Login', 'Đăng nhập')}
+                {t(locale, 'header.login')}
               </Link>
               <Link
                 to="/register"
                 className="inline-flex items-center gap-2 rounded-full bg-[#EAB308] px-4 py-2 text-sm font-bold text-[#0F172A] transition hover:bg-[#f3c623]"
               >
                 <Trophy className="h-4 w-4" />
-                {t(locale, 'Join Now', 'Tham gia ngay')}
+                {t(locale, 'header.joinNow')}
               </Link>
             </>
           ) : (
@@ -120,9 +120,9 @@ function Header() {
                 {auth.user ? (
                   <>
                     <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#EAB308]">{t(locale, 'Signed In', 'Đã đăng nhập')}</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#EAB308]">{t(locale, 'header.signedIn')}</p>
                       <p className="mt-2 text-sm font-bold text-slate-900">{auth.user.fullName}</p>
-                      <p className="mt-1 text-sm text-slate-500">{auth.user.email || t(locale, 'No email on file', 'Chưa có email')}</p>
+                      <p className="mt-1 text-sm text-slate-500">{auth.user.email || t(locale, 'header.noEmail')}</p>
                     </div>
 
                     <div className="mt-3 space-y-1">
@@ -133,7 +133,7 @@ function Header() {
                           className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                         >
                           <Settings className="h-4 w-4" />
-                          {t(locale, 'Admin Dashboard', 'Bảng điều khiển quản trị')}
+                          {t(locale, 'header.adminDashboard')}
                         </Link>
                       ) : null}
                       <Link
@@ -142,7 +142,7 @@ function Header() {
                         className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                       >
                         <UserCircle2 className="h-4 w-4" />
-                        {t(locale, 'My Profile', 'Hồ sơ của tôi')}
+                        {t(locale, 'header.myProfile')}
                       </Link>
                       <button
                         type="button"
@@ -150,16 +150,16 @@ function Header() {
                         className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
                       >
                         <LogOut className="h-4 w-4" />
-                        {t(locale, 'Logout', 'Đăng xuất')}
+                        {t(locale, 'header.logout')}
                       </button>
                     </div>
                   </>
                 ) : (
                   <div className="space-y-2">
                     <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#EAB308]">{t(locale, 'Account', 'Tài khoản')}</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#EAB308]">{t(locale, 'header.account')}</p>
                       <p className="mt-2 text-sm text-slate-600">
-                        {t(locale, 'Sign in to register for tournaments and manage your entries.', 'Đăng nhập để đăng ký giải và quản lý suất thi đấu của bạn.')}
+                        {t(locale, 'header.accountHint')}
                       </p>
                     </div>
                     <Link
@@ -168,7 +168,7 @@ function Header() {
                       className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
                       <UserCircle2 className="h-4 w-4" />
-                      {t(locale, 'Login', 'Đăng nhập')}
+                      {t(locale, 'header.login')}
                     </Link>
                     <Link
                       to="/register"
@@ -176,7 +176,7 @@ function Header() {
                       className="flex items-center gap-3 rounded-2xl bg-[#EAB308] px-4 py-3 text-sm font-bold text-[#0F172A] transition hover:bg-[#f3c623]"
                     >
                       <UserPlus className="h-4 w-4" />
-                      {t(locale, 'Create Account', 'Tạo tài khoản')}
+                      {t(locale, 'header.createAccount')}
                     </Link>
                   </div>
                 )}
@@ -221,27 +221,27 @@ function Header() {
                   onClick={() => setMenuOpen(false)}
                   className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700"
                 >
-                  {t(locale, 'Login', 'Đăng nhập')}
+                  {t(locale, 'header.login')}
                 </Link>
                 <Link
                   to="/register"
                   onClick={() => setMenuOpen(false)}
                   className="rounded-2xl bg-[#EAB308] px-4 py-3 text-sm font-bold text-[#0F172A]"
                 >
-                  {t(locale, 'Create Account', 'Tạo tài khoản')}
+                  {t(locale, 'header.createAccount')}
                 </Link>
               </>
             ) : (
               <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-sm font-bold text-slate-900">{auth.user.fullName}</p>
-                <p className="text-sm text-slate-500">{auth.user.email || t(locale, 'Signed in account', 'Tài khoản đã đăng nhập')}</p>
+                <p className="text-sm text-slate-500">{auth.user.email || t(locale, 'header.signedInAccount')}</p>
                 {auth.isAdmin ? (
                   <Link
                     to="/admin/dashboard"
                     onClick={() => setMenuOpen(false)}
                     className="block rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-700"
                   >
-                    {t(locale, 'Admin Dashboard', 'Bảng điều khiển quản trị')}
+                    {t(locale, 'header.adminDashboard')}
                   </Link>
                 ) : null}
                 <Link
@@ -249,14 +249,14 @@ function Header() {
                   onClick={() => setMenuOpen(false)}
                   className="block rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-700"
                 >
-                  {t(locale, 'My Profile', 'Hồ sơ của tôi')}
+                  {t(locale, 'header.myProfile')}
                 </Link>
                 <button
                   type="button"
                   onClick={handleLogout}
                   className="w-full rounded-2xl border border-rose-200 bg-white px-4 py-3 text-left text-sm font-semibold text-rose-700"
                 >
-                  {t(locale, 'Logout', 'Đăng xuất')}
+                  {t(locale, 'header.logout')}
                 </button>
               </div>
             )}
