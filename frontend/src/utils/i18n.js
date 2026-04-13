@@ -47,6 +47,7 @@ export function translateAdminLabel(locale, label) {
     Dashboard: 'admin.dashboard',
     Tournaments: 'admin.tournaments',
     Registrations: 'admin.registrations',
+    Players: 'admin.players',
     Matches: 'admin.matches',
     'Admin Requests': 'admin.requests',
     'Admin Console': 'admin.console',

@@ -20,7 +20,7 @@ function isKnockoutMatch(match) {
     || label === 'final'
 }
 
-function MatchNode({ match, player1Name, player2Name, registerRef }) {
+function MatchNode({ match, player1Name, player2Name, player1SkillLevel, player2SkillLevel, registerRef }) {
   const isPlayer1Winner = match.winnerPlayerId === match.player1Id
   const isPlayer2Winner = match.winnerPlayerId === match.player2Id
   const statusTone =
@@ -29,6 +29,13 @@ function MatchNode({ match, player1Name, player2Name, registerRef }) {
       : match.status === 'finished'
         ? 'bg-emerald-500/10 text-emerald-200 border border-emerald-400/20'
         : 'bg-white/8 text-slate-300 border border-white/10'
+
+  const displayPlayer1Name = player1Name && player1Name !== 'TBD' && player1SkillLevel 
+    ? `${player1Name} - ${player1SkillLevel}` 
+    : player1Name
+  const displayPlayer2Name = player2Name && player2Name !== 'TBD' && player2SkillLevel 
+    ? `${player2Name} - ${player2SkillLevel}` 
+    : player2Name
 
   return (
     <article
@@ -50,7 +57,7 @@ function MatchNode({ match, player1Name, player2Name, registerRef }) {
       <div className="space-y-2">
         <div className={`rounded-xl px-3 py-2 text-sm font-semibold ${isPlayer1Winner ? 'bg-white/10 text-white' : 'bg-[#1E2C49] text-slate-200'}`}>
           <div className="flex items-center justify-between gap-3">
-            <span className="truncate">{player1Name}</span>
+            <span className="truncate">{displayPlayer1Name}</span>
             <span className={`display-title text-xl ${isPlayer1Winner ? 'text-red-400' : 'text-white'}`}>
               {match.score1}
             </span>
@@ -58,7 +65,7 @@ function MatchNode({ match, player1Name, player2Name, registerRef }) {
         </div>
         <div className={`rounded-xl px-3 py-2 text-sm font-semibold ${isPlayer2Winner ? 'bg-white/10 text-white' : 'bg-[#1E2C49] text-slate-200'}`}>
           <div className="flex items-center justify-between gap-3">
-            <span className="truncate">{player2Name}</span>
+            <span className="truncate">{displayPlayer2Name}</span>
             <span className={`display-title text-xl ${isPlayer2Winner ? 'text-red-400' : 'text-white'}`}>
               {match.score2}
             </span>
@@ -86,6 +93,19 @@ function BracketSection({ title, matches, resolvePlayerName }) {
     scrollTop: 0,
   })
   const [zoom, setZoom] = useState(1)
+
+  const skillLevelMap = useMemo(() => {
+    const map = {}
+    matches.forEach(match => {
+      if (match.player1Id && match.skillLevel) {
+        map[match.player1Id] = match.skillLevel
+      }
+      if (match.player2Id && match.skillLevel) {
+        map[match.player2Id] = match.skillLevel
+      }
+    })
+    return map
+  }, [matches])
 
   const rounds = useMemo(() => (
     Object.values(
@@ -318,6 +338,8 @@ function BracketSection({ title, matches, resolvePlayerName }) {
                         registerRef={() => {}}
                         player1Name={resolvePlayerName(match.player1Id, match.player1Name)}
                         player2Name={resolvePlayerName(match.player2Id, match.player2Name)}
+                        player1SkillLevel={match.player1Id ? skillLevelMap[match.player1Id] : null}
+                        player2SkillLevel={match.player2Id ? skillLevelMap[match.player2Id] : null}
                       />
                     </div>
                   ))}
@@ -338,6 +360,19 @@ function StandardBracketSection({ title, matches, resolvePlayerName }) {
     acc[roundKey].push(match)
     return acc
   }, {})
+
+  const skillLevelMap = useMemo(() => {
+    const map = {}
+    matches.forEach(match => {
+      if (match.player1Id && match.skillLevel) {
+        map[match.player1Id] = match.skillLevel
+      }
+      if (match.player2Id && match.skillLevel) {
+        map[match.player2Id] = match.skillLevel
+      }
+    })
+    return map
+  }, [matches])
 
   return (
     <div>
@@ -362,6 +397,8 @@ function StandardBracketSection({ title, matches, resolvePlayerName }) {
                     registerRef={() => {}}
                     player1Name={resolvePlayerName(match.player1Id, match.player1Name)}
                     player2Name={resolvePlayerName(match.player2Id, match.player2Name)}
+                    player1SkillLevel={match.player1Id ? skillLevelMap[match.player1Id] : null}
+                    player2SkillLevel={match.player2Id ? skillLevelMap[match.player2Id] : null}
                   />
                 ))}
               </div>

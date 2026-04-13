@@ -1,4 +1,4 @@
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, RotateCcw } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import RankingLeaderboard from '../components/RankingLeaderboard'
 import SectionHeader from '../components/ui/SectionHeader'
@@ -12,14 +12,18 @@ function RankingsPage() {
   const locale = useAppStore((state) => state.locale)
   const pushToast = useAppStore((state) => state.pushToast)
   const [resetting, setResetting] = useState(false)
-  const isRankingAdmin = ['admin', 'super_admin'].includes(auth.user?.role)
+  const isRankingAdmin = ['admin', 'super_admin', 'tournament_admin'].includes(auth.user?.role)
   const loader = useCallback(() => rankingService.list(), [])
   const { data: players, loading, error, reload } = useAsyncData(loader)
 
   async function handleResetRankings() {
+    if (!window.confirm(t(locale, 'rankingsPage.resetConfirm'))) {
+      return
+    }
+
     try {
       setResetting(true)
-      await rankingService.recalculate()
+      await rankingService.reset()
       await reload(false)
       pushToast({
         type: 'success',
@@ -44,15 +48,32 @@ function RankingsPage() {
         title={t(locale, 'rankingsPage.title')}
         description={t(locale, 'rankingsPage.description')}
         action={isRankingAdmin ? (
-          <button
-            type="button"
-            onClick={handleResetRankings}
-            disabled={resetting}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <RefreshCw className={`h-4 w-4 ${resetting ? 'animate-spin' : ''}`} />
-            <span>{resetting ? t(locale, 'rankingsPage.resetting') : t(locale, 'rankingsPage.resetAction')}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleResetRankings}
+              disabled={resetting}
+              className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw className={`h-4 w-4 ${resetting ? 'animate-spin' : ''}`} />
+              <span>{resetting ? t(locale, 'rankingsPage.resetting') : t(locale, 'rankingsPage.resetAction')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                pushToast({
+                  type: 'info',
+                  title: t(locale, 'rankingsPage.rollbackInfoTitle'),
+                  message: t(locale, 'rankingsPage.rollbackInfoMessage'),
+                })
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              title={t(locale, 'rankingsPage.rollbackHint')}
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span className="hidden sm:inline">{t(locale, 'rankingsPage.rollbackAction')}</span>
+            </button>
+          </div>
         ) : null}
       />
 

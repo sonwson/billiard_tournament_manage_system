@@ -10,6 +10,14 @@ import { SKILL_LEVEL_OPTIONS } from '../utils/uiConstants'
 import { formatMatchTime } from '../utils/formatters'
 import { t } from '../utils/i18n'
 
+function formatPlayerNameWithSkill(playerName, skillLevel, locale) {
+  if (!playerName || playerName === 'TBD' || playerName === 'Waiting Slot') {
+    return playerName
+  }
+  const skillLabel = skillLevel ? ` - ${t(locale, `skillLevels.${skillLevel}`)}` : ''
+  return `${playerName}${skillLabel}`
+}
+
 function getTableSortValue(tableLabel = '') {
   const value = String(tableLabel || '').trim().toUpperCase()
 
@@ -414,8 +422,8 @@ function AdminMatchesPage() {
                           </div>
                           <p className="mt-3 text-sm text-slate-500">{formatMatchTime(match.scheduledAt)}</p>
                           <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                            <p>{t(locale, 'adminMatches.player1')}: {match.player1Name || t(locale, 'adminMatches.waitingSlot')}</p>
-                            <p>{t(locale, 'adminMatches.player2')}: {match.player2Name || t(locale, 'adminMatches.waitingSlot')}</p>
+                            <p>{t(locale, 'adminMatches.player1')}: {formatPlayerNameWithSkill(match.player1Name, match.skillLevel, locale) || t(locale, 'adminMatches.waitingSlot')}</p>
+                            <p>{t(locale, 'adminMatches.player2')}: {formatPlayerNameWithSkill(match.player2Name, match.skillLevel, locale) || t(locale, 'adminMatches.waitingSlot')}</p>
                             <p>{t(locale, 'adminMatches.raceTo', { value: match.raceTo })}</p>
                             <p>{match.rawTableNo ? t(locale, 'adminMatches.tableQrHint') : t(locale, 'adminMatches.assignTableHint')}</p>
                           </div>
@@ -423,8 +431,8 @@ function AdminMatchesPage() {
 
                         <div className="grid gap-3 sm:grid-cols-2">
                           {[
-                            { label: match.player1Name || t(locale, 'adminMatches.player1'), field: 'player1Score', value: draft.player1Score },
-                            { label: match.player2Name || t(locale, 'adminMatches.player2'), field: 'player2Score', value: draft.player2Score },
+                            { label: formatPlayerNameWithSkill(match.player1Name, match.skillLevel, locale) || t(locale, 'adminMatches.player1'), field: 'player1Score', value: draft.player1Score },
+                            { label: formatPlayerNameWithSkill(match.player2Name, match.skillLevel, locale) || t(locale, 'adminMatches.player2'), field: 'player2Score', value: draft.player2Score },
                           ].map((item) => (
                             <div key={item.field} className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
                               <p className="truncate text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">{item.label}</p>

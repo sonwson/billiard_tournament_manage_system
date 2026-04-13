@@ -100,6 +100,101 @@ async function recordPointChange({
   return rankingRepository.upsertRanking({ playerId, seasonKey }, update);
 }
 
+async function resetRankings(seasonKey = 'all_time') {
+  const RankingHistory = require('./ranking-history.model');
+  
+  // Delete all ranking history for the season
+  await RankingHistory.deleteMany({ seasonKey });
+  
+  // Reset all rankings to zero points
+  const Ranking = require('./ranking.model');
+  await Ranking.updateMany(
+    { seasonKey },
+    {
+      $set: {
+        totalPoints: 0,
+        totalPrizeMoney: 0,
+        currentRank: null,
+        tournamentsPlayed: 0,
+        matchesPlayed: 0,
+        matchesWon: 0,
+        championships: 0,
+        runnerUps: 0,
+        top4Count: 0,
+        top8Count: 0,
+        top16Count: 0,
+      },
+    }
+  );
+
+  return { message: 'All rankings reset successfully' };
+}
+
+async function rollbackPointChange(playerId, sourceKey, seasonKey = 'all_time') {
+  const RankingHistory = require('./ranking-history.model');
+  
+  // Find the history entry
+  const historyEntry = await RankingHistory.findOne({ playerId, sourceKey, seasonKey });
+  
+  if (!historyEntry) {
+    return null;
+  }
+
+  // Check if already rolled back
+  if (historyEntry.sourceType === 'reversal') {
+    return { message: 'Already rolled back', alreadyRolledBack: true };
+  }
+
+  const ranking = await rankingRepository.findOne({ playerId, seasonKey });
+  if (!ranking) {
+    return null;
+  }
+
+  // Reverse the points
+  const before = ranking.totalPoints;
+  const after = before - historyEntry.pointsDelta;
+
+  // Update ranking
+  await rankingRepository.upsertRanking(
+    { playerId, seasonKey },
+    {
+      $set: {
+        totalPoints: after,
+        lastCalculatedAt: new Date(),
+      },
+      $inc: {
+        totalPrizeMoney: -historyEntry.prizeMoneyDelta,
+      },
+    }
+  );
+
+  // Mark original entry as reversed
+  historyEntry.isReversed = true;
+  await historyEntry.save();
+
+  // Create reversal history entry
+  await rankingRepository.createHistory({
+    playerId,
+    seasonKey,
+    tournamentId: historyEntry.tournamentId,
+    matchId: historyEntry.matchId,
+    sourceType: 'reversal',
+    sourceKey: `${sourceKey}_reversal`,
+    pointsDelta: -historyEntry.pointsDelta,
+    prizeMoneyDelta: -historyEntry.prizeMoneyDelta,
+    pointsBefore: before,
+    pointsAfter: after,
+    note: `Rollback of: ${historyEntry.note || historyEntry.sourceType}`,
+    createdBy: historyEntry.createdBy,
+  });
+
+  return {
+    message: 'Point change rolled back successfully',
+    reversedPoints: historyEntry.pointsDelta,
+    newTotal: after,
+  };
+}
+
 async function rebuildRanks(seasonKey = 'all_time') {
   const rankings = await rankingRepository.findMany({ seasonKey }, { skip: 0, limit: 5000 });
 
@@ -119,5 +214,7 @@ module.exports = {
   listRankings,
   getRankingDetail,
   recordPointChange,
+  resetRankings,
+  rollbackPointChange,
   rebuildRanks,
 };

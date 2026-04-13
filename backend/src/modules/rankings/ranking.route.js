@@ -12,5 +12,7 @@ router.get('/', validate(rankingValidation.listRankingsSchema), rankingControlle
 router.get('/history', validate(rankingValidation.rankingHistorySchema), rankingController.getRankingHistory);
 router.get('/:playerId', validate(rankingValidation.rankingDetailSchema), rankingController.getRankingDetail);
 router.post('/recalculate', authMiddleware, requireRole(...ADMIN_ROLES), rankingController.recalculateRankings);
+router.post('/reset', authMiddleware, requireRole(...ADMIN_ROLES), rankingController.resetRankings);
+router.post('/:playerId/rollback', authMiddleware, requireRole(...ADMIN_ROLES), rankingController.rollbackPointChange);
 
 module.exports = router;

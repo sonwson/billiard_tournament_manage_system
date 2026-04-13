@@ -64,6 +64,15 @@ function Footer() {
           </div>
         </div>
       </div>
+
+      {/* Copyright */}
+      <div className="border-t border-white/10 py-6">
+        <div className="page-shell text-center">
+          <p className="text-sm text-slate-400">
+            &copy; {new Date().getFullYear()} All Copyright by SonCaTuan
+          </p>
+        </div>
+      </div>
     </footer>
   )
 }

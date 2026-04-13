@@ -14,6 +14,7 @@ router.patch('/me', authMiddleware, validate(userValidation.updateMeSchema), use
 router.post('/me/request-tournament-admin', authMiddleware, validate(userValidation.requestTournamentAdminSchema), userController.requestTournamentAdmin);
 router.get('/tournament-admin-requests', authMiddleware, requireRole(...ADMIN_ROLES), validate(userValidation.listTournamentAdminRequestsSchema), userController.listTournamentAdminRequests);
 router.patch('/:id/tournament-admin-request/review', authMiddleware, requireRole(...ADMIN_ROLES), validate(userValidation.reviewTournamentAdminRequestSchema), userController.reviewTournamentAdminRequest);
+router.post('/:id/downgrade-tournament-admin', authMiddleware, requireRole(ADMIN_ROLES[0], ADMIN_ROLES[1]), userController.downgradeTournamentAdmin);
 router.get('/', authMiddleware, requireRole(...ADMIN_ROLES), validate(userValidation.listUsersSchema), userController.listUsers);
 router.get('/:id', authMiddleware, requireRole(...ADMIN_ROLES), validate(userValidation.userIdParamSchema), userController.getUserById);
 router.patch('/:id', authMiddleware, requireRole(...ADMIN_ROLES), validate(userValidation.updateUserSchema), userController.updateUser);

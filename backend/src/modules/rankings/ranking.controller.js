@@ -22,9 +22,30 @@ const recalculateRankings = asyncHandler(async (_req, res) => {
   return successResponse(res, { message: 'Rankings recalculated', count });
 });
 
+const resetRankings = asyncHandler(async (req, res) => {
+  const result = await rankingService.resetRankings(req.body.seasonKey || 'all_time');
+  return successResponse(res, result);
+});
+
+const rollbackPointChange = asyncHandler(async (req, res) => {
+  const result = await rankingService.rollbackPointChange(
+    req.params.playerId,
+    req.body.sourceKey,
+    req.body.seasonKey || 'all_time',
+  );
+  
+  if (!result) {
+    return successResponse(res, { message: 'No matching point change found' }, null, 404);
+  }
+  
+  return successResponse(res, result);
+});
+
 module.exports = {
   listRankings,
   getRankingDetail,
   getRankingHistory,
   recalculateRankings,
+  resetRankings,
+  rollbackPointChange,
 };

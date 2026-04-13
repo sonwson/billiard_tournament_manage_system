@@ -181,6 +181,34 @@ async function listMyMatches(actor, query) {
   };
 }
 
+async function downgradeTournamentAdmin(userId, actor) {
+  // Only super admins (admin, super_admin) can downgrade tournament admins
+  if (!isSuperAdminRole(actor.role)) {
+    throw new ApiError(StatusCodes.FORBIDDEN, errorCodes.FORBIDDEN, 'Only super admins can downgrade tournament admins');
+  }
+
+  const user = await getUserById(userId);
+
+  // Check if user is a tournament_admin
+  if (user.role !== ROLES.TOURNAMENT_ADMIN) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, errorCodes.BAD_REQUEST, 'User is not a tournament admin');
+  }
+
+  // Downgrade to user role
+  user.role = ROLES.USER;
+  user.tournamentAdminRequest = {
+    status: 'none',
+    note: '',
+    requestedAt: null,
+    reviewedAt: null,
+    reviewedBy: null,
+  };
+  user.updatedBy = actor.sub;
+  await user.save();
+
+  return user;
+}
+
 module.exports = {
   listUsers,
   listTournamentAdminRequests,
@@ -191,4 +219,5 @@ module.exports = {
   reviewTournamentAdminRequest,
   changePassword,
   listMyMatches,
+  downgradeTournamentAdmin,
 };

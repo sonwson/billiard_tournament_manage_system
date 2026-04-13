@@ -3,6 +3,7 @@ import ProtectedAdminRoute from './components/auth/ProtectedAdminRoute'
 import AdminLayout from './components/layout/AdminLayout'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import AdminMatchesPage from './pages/AdminMatchesPage'
+import AdminPlayersPage from './pages/AdminPlayersPage'
 import AdminRegistrationsPage from './pages/AdminRegistrationsPage'
 import AdminRequestsPage from './pages/AdminRequestsPage'
 import AdminTournamentsPage from './pages/AdminTournamentsPage'
@@ -44,6 +45,7 @@ function App() {
           <Route path="tournaments" element={<AdminTournamentsPage />} />
           <Route path="registrations" element={<AdminRegistrationsPage />} />
           <Route path="matches" element={<AdminMatchesPage />} />
+          <Route path="players" element={<AdminPlayersPage />} />
           <Route path="requests" element={<AdminRequestsPage />} />
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
         </Route>

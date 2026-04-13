@@ -5,6 +5,14 @@ import { useAsyncData } from '../hooks/useAsyncData'
 import { matchService } from '../services/api'
 import { formatMatchTime } from '../utils/formatters'
 
+function formatPlayerNameWithSkill(playerName, skillLevel) {
+  if (!playerName || playerName === 'TBD') {
+    return playerName
+  }
+  const skillLabel = skillLevel ? ` - ${skillLevel}` : ''
+  return `${playerName}${skillLabel}`
+}
+
 function ScoreEntryPage() {
   const { token } = useParams()
   const [busy, setBusy] = useState(false)
@@ -134,8 +142,8 @@ function ScoreEntryPage() {
 
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   {[
-                    { field: 'player1Score', label: match.player1Name || 'Player 1', value: activeDraft.player1Score },
-                    { field: 'player2Score', label: match.player2Name || 'Player 2', value: activeDraft.player2Score },
+                    { field: 'player1Score', label: formatPlayerNameWithSkill(match.player1Name, match.skillLevel) || 'Player 1', value: activeDraft.player1Score },
+                    { field: 'player2Score', label: formatPlayerNameWithSkill(match.player2Name, match.skillLevel) || 'Player 2', value: activeDraft.player2Score },
                   ].map((item) => (
                     <div key={item.field} className="rounded-[1.35rem] border border-white/10 bg-white/5 p-5">
                       <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">{item.label}</p>

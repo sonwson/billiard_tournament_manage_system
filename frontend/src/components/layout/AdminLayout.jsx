@@ -1,4 +1,4 @@
-import { BarChart3, ClipboardCheck, GitBranch, ShieldCheck, Trophy, UserRoundCog } from 'lucide-react'
+import { BarChart3, ClipboardCheck, GitBranch, ShieldCheck, Trophy, UserRoundCog, Users } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAppStore } from '../../store/appStore'
 import { translateAdminLabel } from '../../utils/i18n'
@@ -7,6 +7,7 @@ const adminLinks = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: BarChart3 },
   { label: 'Tournaments', path: '/admin/tournaments', icon: Trophy },
   { label: 'Registrations', path: '/admin/registrations', icon: ClipboardCheck },
+  { label: 'Players', path: '/admin/players', icon: Users },
   { label: 'Matches', path: '/admin/matches', icon: GitBranch },
   { label: 'Admin Requests', path: '/admin/requests', icon: UserRoundCog },
 ]

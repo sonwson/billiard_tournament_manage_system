@@ -247,7 +247,6 @@ function EventDetailPage() {
                     })}
                   </p>
                 ) : null}
-                <p>{t(locale, 'eventDetail.notesApi')}</p>
               </div>
             </div>
 

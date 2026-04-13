@@ -96,6 +96,11 @@ export const userService = {
       body: JSON.stringify(payload),
     })
   },
+  async downgradeTournamentAdmin(userId) {
+    return apiRequest(`/users/${userId}/downgrade-tournament-admin`, {
+      method: 'POST',
+    })
+  },
 }
 
 export const tournamentService = {
@@ -402,6 +407,14 @@ export const playerService = {
 
     return normalizePlayer(response.data)
   },
+  async update(playerId, payload) {
+    const response = await apiRequest(`/players/${playerId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+
+    return normalizePlayer(response.data)
+  },
   async updateMine(payload) {
     const response = await apiRequest('/players/me', {
       method: 'PATCH',
@@ -425,6 +438,18 @@ export const rankingService = {
   async recalculate() {
     return apiRequest('/rankings/recalculate', {
       method: 'POST',
+    })
+  },
+  async reset(seasonKey) {
+    return apiRequest('/rankings/reset', {
+      method: 'POST',
+      body: JSON.stringify({ seasonKey }),
+    })
+  },
+  async rollback(playerId, sourceKey, seasonKey) {
+    return apiRequest(`/rankings/${playerId}/rollback`, {
+      method: 'POST',
+      body: JSON.stringify({ sourceKey, seasonKey }),
     })
   },
 }

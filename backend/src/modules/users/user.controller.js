@@ -47,6 +47,11 @@ const listMyMatches = asyncHandler(async (req, res) => {
   return successResponse(res, result.items, result.meta);
 });
 
+const downgradeTournamentAdmin = asyncHandler(async (req, res) => {
+  const result = await userService.downgradeTournamentAdmin(req.params.id, req.user);
+  return successResponse(res, result);
+});
+
 module.exports = {
   listUsers,
   listTournamentAdminRequests,
@@ -57,4 +62,5 @@ module.exports = {
   reviewTournamentAdminRequest,
   changePassword,
   listMyMatches,
+  downgradeTournamentAdmin,
 };
