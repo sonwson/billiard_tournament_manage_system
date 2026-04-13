@@ -26,6 +26,8 @@ router.post('/', authMiddleware, requireRole(...ADMIN_ROLES), validate(tournamen
 router.patch('/:id', authMiddleware, requireRole(...ADMIN_ROLES), validate(tournamentValidation.updateTournamentSchema), tournamentController.updateTournament);
 router.patch('/:id/status', authMiddleware, requireRole(...ADMIN_ROLES), validate(tournamentValidation.updateTournamentStatusSchema), tournamentController.updateTournamentStatus);
 router.post('/:id/generate-bracket', authMiddleware, requireRole(...ADMIN_ROLES), validate(tournamentValidation.generateBracketSchema), tournamentController.generateBracket);
+router.post('/:id/regenerate-bracket', authMiddleware, requireRole(...ADMIN_ROLES), validate(tournamentValidation.generateBracketSchema), tournamentController.regenerateBracket);
+router.get('/:id/player-stats', validate(tournamentValidation.tournamentIdParamSchema), tournamentController.getPlayerStats);
 router.patch('/:id/restore', authMiddleware, requireRole(ROLES.ADMIN, ROLES.SUPER_ADMIN), validate(tournamentValidation.tournamentIdParamSchema), tournamentController.restoreTournament);
 router.delete('/:id/permanent', authMiddleware, requireRole(ROLES.ADMIN, ROLES.SUPER_ADMIN), validate(tournamentValidation.tournamentIdParamSchema), tournamentController.deleteTournamentPermanently);
 router.delete('/:id', authMiddleware, requireRole(...ADMIN_ROLES), validate(tournamentValidation.tournamentIdParamSchema), tournamentController.deleteTournament);

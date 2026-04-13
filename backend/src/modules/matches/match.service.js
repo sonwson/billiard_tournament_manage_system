@@ -422,10 +422,12 @@ async function finalizeTournamentIfNeeded(match, actorId) {
     note: `Champion bonus for ${tournament.name}`,
   });
 
-  tournament.championsBySkillLevel = [
-    ...(tournament.championsBySkillLevel || []).filter((item) => item.skillLevel !== match.skillLevel),
-    { skillLevel: match.skillLevel, playerId: match.winnerPlayerId },
-  ];
+  if (match.skillLevel) {
+    tournament.championsBySkillLevel = [
+      ...(tournament.championsBySkillLevel || []).filter((item) => item.skillLevel !== match.skillLevel),
+      { skillLevel: match.skillLevel, playerId: match.winnerPlayerId },
+    ];
+  }
   tournament.championPlayerId = match.winnerPlayerId;
   tournament.updatedBy = actorId;
 

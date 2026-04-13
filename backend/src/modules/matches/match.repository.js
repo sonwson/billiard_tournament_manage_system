@@ -39,6 +39,10 @@ async function updateById(id, payload) {
   return Match.findByIdAndUpdate(id, payload, { new: true });
 }
 
+async function deleteMany(filter) {
+  return Match.deleteMany(filter);
+}
+
 module.exports = {
   createMany,
   findById,
@@ -46,4 +50,5 @@ module.exports = {
   findMany,
   countDocuments,
   updateById,
+  deleteMany,
 };

@@ -45,6 +45,7 @@
     matches: 'Trận đấu',
     ranking: 'Xếp hạng',
     players: 'Cơ thủ',
+    standings: 'Bảng xếp hạng',
   },
   eventsPage: {
     eyebrow: 'Lịch thi đấu',
@@ -317,6 +318,11 @@
     generating: 'Đang tạo...',
     bracketGenerated: 'Đã tạo bracket',
     generateBracket: 'Tạo bracket',
+    regenerateBracket: 'Tạo lại bracket',
+    regenerateConfirm: 'Bracket cũ sẽ bị xóa và tạo lại. Tất cả kết quả trận đấu sẽ mất. Tiếp tục?',
+    confirmRegenerate: 'Xác nhận tạo lại',
+    regenerating: 'Đang tạo lại...',
+    bracketRegenerated: 'Tạo lại bracket thành công với {count} trận.',
     reviewRegistrations: 'Duyệt đăng ký',
     manageMatches: 'Quản lý trận đấu',
     editTournament: 'Chỉnh sửa giải đấu',
@@ -488,6 +494,9 @@
       description: 'Mô tả',
       prizeBreakdown: 'Cơ cấu giải thưởng',
       raceToByRound: 'Race To theo vòng',
+      roundRobinRounds: 'Số vòng round-robin',
+      qualifiersCount: 'Số người vào knockout',
+      knockoutStartRound: 'Vòng knockout bắt đầu từ',
     },
     actions: {
       addPrizeRow: 'Thêm dòng thưởng',
@@ -508,6 +517,7 @@
       prizeEach: 'Mỗi người nhận',
       noFileChosen: 'Chưa chọn tệp',
       raceTo: 'Race to',
+      qualifiersCount: 'VD: 8, 16, 32',
     },
     helper: {
       backgroundFallback: 'Nếu để trống, hệ thống sẽ dùng ảnh nền mặc định cho giải đấu.',
@@ -515,6 +525,10 @@
       total: 'Tổng',
       rowTotal: 'Tổng dòng',
       doubleEliminationHint: 'Double elimination ở đây được hiểu là vòng loại 2 mạng vào nhánh knockout. Người bất bại sẽ đi từ nhánh thắng, người thua 1 lần vẫn có thể đi tiếp từ nhánh thua và thua lần 2 sẽ bị loại.',
+      roundRobinRoundsHint: 'Số lần các cơ thủ gặp nhau (mặc định: 1). Mỗi vòng, thứ tự đối đầu sẽ được xáo trộn.',
+      qualifiersCountHint: 'Số cơ thủ có điểm cao nhất sau vòng round-robin sẽ vào knockout. Để trống nếu không có knockout.',
+      knockoutStartRoundHint: 'Vòng knockout bắt đầu từ bao nhiêu người. Nếu để trống, hệ thống tự chọn dựa trên số người lọt vào.',
+      roundRobinHint: 'Hệ thống sẽ tạo bảng xếp hạng với các chỉ số: Thắng, Thua, Điểm, Race Thắng, Race Thua, Hệ số. Nếu cấu hình knockout, top N người sẽ được chọn dựa trên điểm (tie-break: hệ số cao hơn).',
     },
     validation: {
       tournamentNameRequired: 'Tên giải đấu là bắt buộc.',
@@ -563,12 +577,29 @@
         monthly: 'Monthly',
         major: 'Major',
       },
+      knockoutStartRound: {
+        auto: 'Tự động',
+      },
     },
     round: 'Round {number}',
     winnerRound: 'Winner Round {number}',
     loserRound: 'Loser Round {number}',
     previewAlt: 'Xem trước poster giải đấu',
     lastSize: 'Last {size}',
+  },
+
+  playerStats: {
+    title: 'Bảng xếp hạng',
+    rank: 'XH',
+    player: 'Cơ thủ',
+    wins: 'Thắng',
+    losses: 'Thua',
+    points: 'Điểm',
+    racesWon: 'Race Thắng',
+    racesLost: 'Race Thua',
+    raceDiff: 'Hiệu số',
+    matchesPlayed: 'Số trận',
+    noStats: 'Chưa có dữ liệu thống kê.',
   },
 
   heroBanner: {

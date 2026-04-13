@@ -45,6 +45,7 @@
     matches: 'Matches',
     ranking: 'Ranking',
     players: 'Players',
+    standings: 'Standings',
   },
   eventsPage: {
     eyebrow: 'Global Calendar',
@@ -317,6 +318,11 @@
     generating: 'Generating...',
     bracketGenerated: 'Bracket Generated',
     generateBracket: 'Generate Bracket',
+    regenerateBracket: 'Regenerate Bracket',
+    regenerateConfirm: 'Old bracket will be deleted and regenerated. All match results will be lost. Continue?',
+    confirmRegenerate: 'Confirm Regenerate',
+    regenerating: 'Regenerating...',
+    bracketRegenerated: 'Bracket regenerated with {count} matches.',
     reviewRegistrations: 'Review Registrations',
     manageMatches: 'Manage Matches',
     editTournament: 'Edit Tournament',
@@ -488,6 +494,9 @@
       description: 'Description',
       prizeBreakdown: 'Prize Breakdown',
       raceToByRound: 'Race To Rules By Round',
+      roundRobinRounds: 'Round-Robin Rounds',
+      qualifiersCount: 'Qualifiers Count',
+      knockoutStartRound: 'Knockout Start Round',
     },
     actions: {
       addPrizeRow: 'Add Prize Row',
@@ -508,6 +517,7 @@
       prizeEach: 'Each Player',
       noFileChosen: 'No file chosen',
       raceTo: 'Race to',
+      qualifiersCount: 'e.g., 8, 16, 32',
     },
     helper: {
       backgroundFallback: 'If empty, the system will use the default tournament background.',
@@ -515,6 +525,10 @@
       total: 'Total',
       rowTotal: 'Row total',
       doubleEliminationHint: 'Double elimination here is treated as a 2-life qualifier into a knockout bracket. Undefeated players qualify from the winner side, one-loss players can still qualify from the loser side, and a second loss eliminates them.',
+      roundRobinRoundsHint: 'Number of full round-robin cycles (default: 1). Each cycle rotates pairings for variety.',
+      qualifiersCountHint: 'Top N players by points after round-robin advance to knockout. Leave empty for pure round-robin.',
+      knockoutStartRoundHint: 'Knockout bracket starts at this size. If empty, auto-determined based on qualifiers count.',
+      roundRobinHint: 'Player standings will show: Wins, Losses, Points, Races Won, Races Lost, Race Ratio. If knockout is configured, top N players advance based on points (tie-break: higher race ratio).',
     },
     validation: {
       tournamentNameRequired: 'Tournament name is required.',
@@ -563,12 +577,29 @@
         monthly: 'Monthly',
         major: 'Major',
       },
+      knockoutStartRound: {
+        auto: 'Auto',
+      },
     },
     round: 'Round {number}',
     winnerRound: 'Winner Round {number}',
     loserRound: 'Loser Round {number}',
     previewAlt: 'Tournament poster preview',
     lastSize: 'Last {size}',
+  },
+
+  playerStats: {
+    title: 'Player Standings',
+    rank: 'Rank',
+    player: 'Player',
+    wins: 'Wins',
+    losses: 'Losses',
+    points: 'Points',
+    racesWon: 'Races Won',
+    racesLost: 'Races Lost',
+    raceDiff: 'Diff',
+    matchesPlayed: 'Matches',
+    noStats: 'No stats available yet.',
   },
 
   heroBanner: {

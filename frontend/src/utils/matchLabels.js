@@ -13,8 +13,10 @@ export function formatBracketRound(match = {}) {
   if (stage === 'quarter_final') return 'Quarter-final'
   if (stage === 'semi_final') return 'Semi-final'
   if (stage === 'final' || stage === 'grand_final') return 'Final'
-  if (stage === 'round_of_16') return 'Last 16'
-  if (stage === 'round_of_32') return 'Last 32'
+  if (stage === 'round_of_16' || stage === 'last_16') return 'Last 16'
+  if (stage === 'round_of_32' || stage === 'last_32') return 'Last 32'
+  if (stage === 'round_of_64' || stage === 'last_64') return 'Last 64'
+  if (stage === 'round_of_128' || stage === 'last_128') return 'Last 128'
 
   if (!roundNumber) {
     return bracketType === 'loser' ? 'Loser Round' : 'Round'

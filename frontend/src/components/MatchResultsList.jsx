@@ -61,7 +61,7 @@ function MatchResultsList({ matches = [], resolvePlayerName }) {
 
   const rounds = matches.reduce((accumulator, match) => {
     const resolvedRound = match.roundLabel || match.round || formatBracketRound(match)
-    const key = `${match.skillLevel || 'open'}::${resolvedRound}::${match.bracketType || 'main'}::${match.roundNumber || 0}::${match.stage || ''}`
+    const key = `${resolvedRound}::${match.bracketType || 'main'}::${match.roundNumber || 0}::${match.stage || ''}`
     if (!accumulator[key]) {
       accumulator[key] = []
     }
@@ -77,9 +77,7 @@ function MatchResultsList({ matches = [], resolvePlayerName }) {
       const leftRound = Number(leftItem.roundNumber || 0)
       const rightRound = Number(rightItem.roundNumber || 0)
       if (leftRound !== rightRound) return leftRound - rightRound
-      const leftSkill = String(leftItem.skillLevel || '')
-      const rightSkill = String(rightItem.skillLevel || '')
-      return leftSkill.localeCompare(rightSkill)
+      return String(leftItem.bracketType || '').localeCompare(String(rightItem.bracketType || ''))
     })
 
   if (!entries.length) {
@@ -102,11 +100,10 @@ function MatchResultsList({ matches = [], resolvePlayerName }) {
 
             <div className="space-y-1.5">
               {items.map((match) => {
-                const skillSuffix = match.skillLevel ? ` - ${t(locale, `skillLevels.${match.skillLevel}`)}` : ''
                 const resolvedPlayer1Name = resolvePlayerName(match.player1Id, match.player1Name)
                 const resolvedPlayer2Name = resolvePlayerName(match.player2Id, match.player2Name)
-                const player1Name = resolvedPlayer1Name && resolvedPlayer1Name !== t(locale, 'matchList.tbd') ? `${resolvedPlayer1Name}${skillSuffix}` : resolvedPlayer1Name
-                const player2Name = resolvedPlayer2Name && resolvedPlayer2Name !== t(locale, 'matchList.tbd') ? `${resolvedPlayer2Name}${skillSuffix}` : resolvedPlayer2Name
+                const player1Name = resolvedPlayer1Name
+                const player2Name = resolvedPlayer2Name
                 const player1Won = String(match.winnerPlayerId || '') === String(match.player1Id || '')
                 const player2Won = String(match.winnerPlayerId || '') === String(match.player2Id || '')
                 const isLive = match.status === 'live'

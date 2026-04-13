@@ -173,6 +173,9 @@ export function normalizeMatch(rawMatch) {
     completed: 'finished',
   }
 
+  const player1Obj = rawMatch.player1Id || {}
+  const player2Obj = rawMatch.player2Id || {}
+
   return {
     id: rawMatch.id || rawMatch._id,
     eventId: rawMatch.eventId || rawMatch.tournamentId,
@@ -180,18 +183,20 @@ export function normalizeMatch(rawMatch) {
     round: rawMatch.round || formatBracketRound(rawMatch),
     roundLabel: rawMatch.roundLabel || formatBracketRound(rawMatch),
     bracketType: rawMatch.bracketType || 'main',
-    skillLevel: rawMatch.skillLevel || null,
-    bracketLabel: rawMatch.bracketLabel || rawMatch.skillLevel || 'Open',
+    skillLevel: Object.prototype.hasOwnProperty.call(rawMatch || {}, 'skillLevel') ? rawMatch.skillLevel : null,
+    bracketLabel: rawMatch.bracketLabel || 'Open',
     matchNumber: rawMatch.matchNumber || null,
     table: rawMatch.table || rawMatch.tableNo || 'Table TBC',
     rawTableNo: rawMatch.tableNo || rawMatch.table || null,
     status: statusMap[rawMatch.status] || rawMatch.status || 'scheduled',
     rawStatus: rawMatch.status || 'scheduled',
     scheduledAt: toIsoDate(rawMatch.scheduledAt) || new Date().toISOString(),
-    player1Id: rawMatch.player1Id?._id || rawMatch.player1Id,
-    player2Id: rawMatch.player2Id?._id || rawMatch.player2Id,
-    player1Name: rawMatch.player1Id?.displayName || rawMatch.player1Name || 'TBD',
-    player2Name: rawMatch.player2Id?.displayName || rawMatch.player2Name || 'TBD',
+    player1Id: player1Obj._id || player1Obj.id || rawMatch.player1Id,
+    player2Id: player2Obj._id || player2Obj.id || rawMatch.player2Id,
+    player1Name: player1Obj.displayName || rawMatch.player1Name || 'TBD',
+    player2Name: player2Obj.displayName || rawMatch.player2Name || 'TBD',
+    player1SkillLevel: player1Obj.skillLevel || null,
+    player2SkillLevel: player2Obj.skillLevel || null,
     winnerPlayerId: rawMatch.winnerPlayerId?._id || rawMatch.winnerPlayerId || null,
     nextMatchId: rawMatch.nextMatchId?._id || rawMatch.nextMatchId || null,
     loserNextMatchId: rawMatch.loserNextMatchId?._id || rawMatch.loserNextMatchId || null,

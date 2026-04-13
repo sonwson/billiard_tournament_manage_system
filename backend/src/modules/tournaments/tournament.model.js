@@ -17,7 +17,11 @@ const RaceToRuleSchema = new mongoose.Schema({
 }, { _id: false });
 
 const BracketSettingsSchema = new mongoose.Schema({
-  knockoutStartSize: { type: Number, enum: [128, 64, 32, 16, 8], default: null },
+  knockoutStartSize: { type: Number, enum: [128, 64, 32, 16, 8, 4, 2], default: null },
+  // Round-robin settings
+  roundRobinRounds: { type: Number, default: 1, min: 1 }, // Number of full round-robin cycles
+  qualifiersCount: { type: Number, default: null, min: 2 }, // How many players advance to knockout
+  knockoutStartRound: { type: Number, enum: [128, 64, 32, 16, 8, 4, 2], default: null }, // Knockout starts at this size (e.g., 16 = Last 16)
 }, { _id: false });
 
 const TableAccessSchema = new mongoose.Schema({

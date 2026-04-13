@@ -67,6 +67,16 @@ const generateBracket = asyncHandler(async (req, res) => {
   return successResponse(res, result);
 });
 
+const regenerateBracket = asyncHandler(async (req, res) => {
+  const result = await tournamentService.regenerateBracket(req.params.id, req.body, req.user);
+  return successResponse(res, result);
+});
+
+const getPlayerStats = asyncHandler(async (req, res) => {
+  const result = await tournamentService.getPlayerStats(req.params.id);
+  return successResponse(res, result);
+});
+
 module.exports = {
   createTournament,
   listTournaments,
@@ -81,4 +91,6 @@ module.exports = {
   restoreTournament,
   deleteTournamentPermanently,
   generateBracket,
+  regenerateBracket,
+  getPlayerStats,
 };

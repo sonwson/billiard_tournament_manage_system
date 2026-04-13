@@ -4,7 +4,15 @@ const { SKILL_LEVELS } = require('../../common/constants/skillLevel');
 
 const MatchSchema = new mongoose.Schema({
   tournamentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tournament', required: true, index: true },
-  skillLevel: { type: String, enum: SKILL_LEVELS, required: true, index: true },
+  skillLevel: {
+    type: String,
+    default: null,
+    index: true,
+    validate: {
+      validator: (value) => value == null || SKILL_LEVELS.includes(value),
+      message: 'Invalid skill level',
+    },
+  },
   bracketLabel: { type: String, required: true },
   roundNumber: { type: Number, required: true, index: true },
   roundLabel: { type: String, required: true },
@@ -12,6 +20,8 @@ const MatchSchema = new mongoose.Schema({
     type: String,
     enum: [
       'qualifier',
+      'round_of_128',
+      'round_of_64',
       'round_of_32',
       'round_of_16',
       'quarter_final',
@@ -29,6 +39,25 @@ const MatchSchema = new mongoose.Schema({
       'grand_final',
       'winner_final',
       'loser_final',
+      // Round-robin multi-round stages
+      'round_robin_round_1',
+      'round_robin_round_2',
+      'round_robin_round_3',
+      'round_robin_round_4',
+      'round_robin_round_5',
+      'round_robin_round_6',
+      'round_robin_round_7',
+      'round_robin_round_8',
+      'round_robin_round_9',
+      'round_robin_round_10',
+      // Knockout stages
+      'last_128',
+      'last_64',
+      'last_32',
+      'last_16',
+      'last_8',
+      'last_4',
+      'last_2',
     ],
     required: true,
   },

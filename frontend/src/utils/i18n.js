@@ -63,6 +63,7 @@ export function translateEventTab(locale, tab) {
     Matches: 'eventTabs.matches',
     Ranking: 'eventTabs.ranking',
     Players: 'eventTabs.players',
+    Standings: 'eventTabs.standings',
   }
 
   return t(locale, map[tab] || tab)

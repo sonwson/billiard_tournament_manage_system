@@ -6,16 +6,28 @@ import StatusBadge from '../components/ui/StatusBadge'
 import { useAsyncData } from '../hooks/useAsyncData'
 import { matchService, tournamentService } from '../services/api'
 import { useAppStore } from '../store/appStore'
-import { SKILL_LEVEL_OPTIONS } from '../utils/uiConstants'
 import { formatMatchTime } from '../utils/formatters'
 import { t } from '../utils/i18n'
 
-function formatPlayerNameWithSkill(playerName, skillLevel, locale) {
+function formatScheduledPlayerName(playerName, skillLevel, locale) {
   if (!playerName || playerName === 'TBD' || playerName === 'Waiting Slot') {
     return playerName
   }
-  const skillLabel = skillLevel ? ` - ${t(locale, `skillLevels.${skillLevel}`)}` : ''
-  return `${playerName}${skillLabel}`
+
+  return skillLevel ? `${playerName} - ${t(locale, `skillLevels.${skillLevel}`)}` : playerName
+}
+
+function shouldShowBracketLabel(bracketLabel, skillLevel) {
+  if (!bracketLabel) return false
+
+  const normalizedLabel = String(bracketLabel).trim().toUpperCase()
+  const normalizedSkill = String(skillLevel || '').trim().toUpperCase()
+
+  if (!normalizedLabel) return false
+  if (normalizedSkill && normalizedLabel === normalizedSkill) return false
+  if (['CN', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K'].includes(normalizedLabel)) return false
+
+  return true
 }
 
 function getTableSortValue(tableLabel = '') {
@@ -64,7 +76,6 @@ function AdminMatchesPage() {
   const locale = useAppStore((state) => state.locale)
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedTournamentId = searchParams.get('tournamentId') || ''
-  const selectedSkillLevel = searchParams.get('skillLevel') || ''
   const [actionError, setActionError] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
   const [busyMatchId, setBusyMatchId] = useState('')
@@ -103,10 +114,9 @@ function AdminMatchesPage() {
     }
 
     return matchService.listByTournament(selectedTournamentId, {
-      skillLevel: selectedSkillLevel || undefined,
       limit: 1000,
     })
-  }, [selectedSkillLevel, selectedTournamentId])
+  }, [selectedTournamentId])
 
   const { data: matchData, loading, error, setData } = useAsyncData(matchesLoader, { refreshMs: 5000 })
 
@@ -180,7 +190,6 @@ function AdminMatchesPage() {
     if (!selectedTournamentId) return
 
     const refreshed = await matchService.listByTournament(selectedTournamentId, {
-      skillLevel: selectedSkillLevel || undefined,
       limit: 1000,
     })
 
@@ -189,10 +198,6 @@ function AdminMatchesPage() {
 
   function updateFilter(key, value) {
     const next = new URLSearchParams(searchParams)
-
-    if (key === 'tournamentId') {
-      next.delete('skillLevel')
-    }
 
     if (value) next.set(key, value)
     else next.delete(key)
@@ -329,7 +334,7 @@ function AdminMatchesPage() {
           description={t(locale, 'adminMatches.description')}
         />
 
-        <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="mt-6 grid gap-4">
           <label className="block min-w-0">
             <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{t(locale, 'adminMatches.tournament')}</span>
             <select
@@ -346,21 +351,6 @@ function AdminMatchesPage() {
             </select>
           </label>
 
-          <label className="block min-w-0">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{t(locale, 'adminMatches.skillBracket')}</span>
-            <select
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-medium text-slate-700"
-              value={selectedSkillLevel}
-              onChange={(event) => updateFilter('skillLevel', event.target.value)}
-            >
-              <option value="">{t(locale, 'common.allBrackets')}</option>
-              {SKILL_LEVEL_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {t(locale, `skillLevels.${option.value}`)}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
 
         {actionError ? <p className="mt-4 text-sm font-medium text-red-600">{actionError}</p> : null}
@@ -382,10 +372,7 @@ function AdminMatchesPage() {
             <section key={key} className="space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#EAB308]">
-                    {t(locale, `skillLevels.${items[0].skillLevel}`)}
-                  </p>
-                  <h3 className="display-title mt-2 text-2xl text-[#0F172A]">{items[0].round}</h3>
+                  <h3 className="display-title text-2xl text-[#0F172A]">{items[0].round}</h3>
                 </div>
                 <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
               </div>
@@ -414,7 +401,9 @@ function AdminMatchesPage() {
                       <div className="grid min-w-0 gap-4">
                         <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
                           <div className="flex flex-wrap items-center gap-3">
-                            <h4 className="text-lg font-bold text-slate-900">{match.bracketLabel}</h4>
+                            {shouldShowBracketLabel(match.bracketLabel, match.skillLevel) ? (
+                              <h4 className="text-lg font-bold text-slate-900">{match.bracketLabel}</h4>
+                            ) : null}
                             <StatusBadge tone={match.status}>{t(locale, 'status.' + match.status)}</StatusBadge>
                             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                               {match.rawTableNo || t(locale, 'adminMatches.tableTbc')}
@@ -422,8 +411,8 @@ function AdminMatchesPage() {
                           </div>
                           <p className="mt-3 text-sm text-slate-500">{formatMatchTime(match.scheduledAt)}</p>
                           <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                            <p>{t(locale, 'adminMatches.player1')}: {formatPlayerNameWithSkill(match.player1Name, match.skillLevel, locale) || t(locale, 'adminMatches.waitingSlot')}</p>
-                            <p>{t(locale, 'adminMatches.player2')}: {formatPlayerNameWithSkill(match.player2Name, match.skillLevel, locale) || t(locale, 'adminMatches.waitingSlot')}</p>
+                            <p>{t(locale, 'adminMatches.player1')}: {formatScheduledPlayerName(match.player1Name, match.player1SkillLevel || match.skillLevel, locale) || t(locale, 'adminMatches.waitingSlot')}</p>
+                            <p>{t(locale, 'adminMatches.player2')}: {formatScheduledPlayerName(match.player2Name, match.player2SkillLevel || match.skillLevel, locale) || t(locale, 'adminMatches.waitingSlot')}</p>
                             <p>{t(locale, 'adminMatches.raceTo', { value: match.raceTo })}</p>
                             <p>{match.rawTableNo ? t(locale, 'adminMatches.tableQrHint') : t(locale, 'adminMatches.assignTableHint')}</p>
                           </div>
@@ -431,8 +420,8 @@ function AdminMatchesPage() {
 
                         <div className="grid gap-3 sm:grid-cols-2">
                           {[
-                            { label: formatPlayerNameWithSkill(match.player1Name, match.skillLevel, locale) || t(locale, 'adminMatches.player1'), field: 'player1Score', value: draft.player1Score },
-                            { label: formatPlayerNameWithSkill(match.player2Name, match.skillLevel, locale) || t(locale, 'adminMatches.player2'), field: 'player2Score', value: draft.player2Score },
+                            { label: formatScheduledPlayerName(match.player1Name, match.player1SkillLevel || match.skillLevel, locale) || t(locale, 'adminMatches.player1'), field: 'player1Score', value: draft.player1Score },
+                            { label: formatScheduledPlayerName(match.player2Name, match.player2SkillLevel || match.skillLevel, locale) || t(locale, 'adminMatches.player2'), field: 'player2Score', value: draft.player2Score },
                           ].map((item) => (
                             <div key={item.field} className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
                               <p className="truncate text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">{item.label}</p>

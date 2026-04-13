@@ -24,6 +24,7 @@ function AdminTournamentsPage() {
   const [viewMode, setViewMode] = useState('active')
   const [submitting, setSubmitting] = useState(false)
   const [generatingId, setGeneratingId] = useState('')
+  const [confirmRegenerateId, setConfirmRegenerateId] = useState('')
   const [deletingId, setDeletingId] = useState('')
   const [editingTournamentId, setEditingTournamentId] = useState('')
   const [confirmDeleteTournamentId, setConfirmDeleteTournamentId] = useState('')
@@ -134,6 +135,33 @@ function AdminTournamentsPage() {
         )),
       )
       setActionSuccess(t(locale, 'adminTournaments.bracketCreated', { count: response.data?.matchesCreated || 0 }))
+    } catch (caughtError) {
+      setActionError(caughtError.message || t(locale, 'adminTournaments.bracketFailed'))
+    } finally {
+      setGeneratingId('')
+    }
+  }
+
+  async function handleRegenerateBracket(tournamentId) {
+    setGeneratingId(tournamentId)
+    setConfirmRegenerateId('')
+    setActionError('')
+    setActionSuccess('')
+
+    try {
+      const response = await tournamentService.regenerateBracket(tournamentId, {
+        seedingMode: 'ranking',
+        raceTo: 7,
+      })
+
+      setData((current) =>
+        (current || []).map((item) => (
+          item.id === tournamentId
+            ? { ...item, bracketGeneratedAt: new Date().toISOString() }
+            : item
+        )),
+      )
+      setActionSuccess(t(locale, 'adminTournaments.bracketRegenerated', { count: response.data?.matchesCreated || 0 }))
     } catch (caughtError) {
       setActionError(caughtError.message || t(locale, 'adminTournaments.bracketFailed'))
     } finally {
@@ -352,14 +380,49 @@ function AdminTournamentsPage() {
               <div className="grid gap-3">
                 {viewMode === 'active' ? (
                   <>
-                    <button
-                      type="button"
-                      disabled={generatingId === tournament.id || !!tournament.bracketGeneratedAt}
-                      onClick={() => handleGenerateBracket(tournament.id)}
-                      className="inline-flex w-full items-center justify-center rounded-2xl bg-[#0F172A] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#14213D] disabled:opacity-60"
-                    >
-                      {generatingId === tournament.id ? t(locale, 'adminTournaments.generating') : tournament.bracketGeneratedAt ? t(locale, 'adminTournaments.bracketGenerated') : t(locale, 'adminTournaments.generateBracket')}
-                    </button>
+                    {!tournament.bracketGeneratedAt ? (
+                      <button
+                        type="button"
+                        disabled={generatingId === tournament.id}
+                        onClick={() => handleGenerateBracket(tournament.id)}
+                        className="inline-flex w-full items-center justify-center rounded-2xl bg-[#0F172A] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#14213D] disabled:opacity-60"
+                      >
+                        {generatingId === tournament.id ? t(locale, 'adminTournaments.generating') : t(locale, 'adminTournaments.generateBracket')}
+                      </button>
+                    ) : (
+                      <>
+                        {confirmRegenerateId === tournament.id ? (
+                          <div className="grid gap-2">
+                            <p className="text-xs font-medium text-amber-700">{t(locale, 'adminTournaments.regenerateConfirm')}</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleRegenerateBracket(tournament.id)}
+                                disabled={generatingId === tournament.id}
+                                className="inline-flex items-center justify-center rounded-xl bg-amber-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-amber-700 disabled:opacity-60"
+                              >
+                                {generatingId === tournament.id ? t(locale, 'adminTournaments.regenerating') : t(locale, 'adminTournaments.confirmRegenerate')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmRegenerateId('')}
+                                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                              >
+                                {t(locale, 'adminTournaments.cancel')}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmRegenerateId(tournament.id)}
+                            className="inline-flex w-full items-center justify-center rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700 transition hover:bg-amber-100"
+                          >
+                            {t(locale, 'adminTournaments.regenerateBracket')}
+                          </button>
+                        )}
+                      </>
+                    )}
                     <Link
                       to={`/admin/registrations?tournamentId=${tournament.id}`}
                       className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100"

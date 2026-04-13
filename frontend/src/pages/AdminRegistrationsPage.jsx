@@ -23,7 +23,6 @@ function AdminRegistrationsPage() {
   const [entryMode, setEntryMode] = useState('existing')
   const [directEntryForm, setDirectEntryForm] = useState({
     playerIds: [],
-    skillLevel: 'CN',
   })
   const [quickCreateForm, setQuickCreateForm] = useState({
     displayName: '',
@@ -151,13 +150,15 @@ function AdminRegistrationsPage() {
     setActionSuccess('')
 
     try {
+      // Use each player's existing skillLevel
       const results = await Promise.allSettled(
-        directEntryForm.playerIds.map((playerId) =>
-          tournamentService.register(selectedTournamentId, {
+        directEntryForm.playerIds.map((playerId) => {
+          const player = players?.find((p) => p.id === playerId)
+          return tournamentService.register(selectedTournamentId, {
             playerId,
-            skillLevel: directEntryForm.skillLevel,
-          }),
-        ),
+            skillLevel: player?.skillLevel || 'CN',
+          })
+        }),
       )
 
       const successCount = results.filter((result) => result.status === 'fulfilled').length
@@ -166,7 +167,6 @@ function AdminRegistrationsPage() {
       await reloadRegistrations()
       setDirectEntryForm({
         playerIds: [],
-        skillLevel: directEntryForm.skillLevel,
       })
       setActionSuccess(
         failedCount
@@ -361,7 +361,7 @@ function AdminRegistrationsPage() {
                   </div>
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-[1fr_220px_240px]">
+                <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
                   <div className="rounded-2xl border border-slate-200 bg-white p-3">
                     <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
                       {selectablePlayers.length ? (
@@ -398,21 +398,6 @@ function AdminRegistrationsPage() {
                       )}
                     </div>
                   </div>
-
-                  <label className="block">
-                    <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{t(locale, 'adminRegistrations.skillLevel')}</span>
-                    <select
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-medium text-slate-700"
-                      value={directEntryForm.skillLevel}
-                      onChange={(event) => setDirectEntryForm((current) => ({ ...current, skillLevel: event.target.value }))}
-                    >
-                      {SKILL_LEVEL_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {t(locale, `skillLevels.${option.value}`)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
 
                   <div className="flex items-end">
                     <button

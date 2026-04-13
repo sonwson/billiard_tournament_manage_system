@@ -8,6 +8,12 @@ import {
 } from '../utils/adapters'
 
 export const authService = {
+  async refresh(refreshToken) {
+    return apiRequest('/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken }),
+    })
+  },
   async login(payload) {
     return apiRequest('/auth/login', {
       method: 'POST',
@@ -44,6 +50,18 @@ export const authService = {
 }
 
 export const userService = {
+  async listUsers(filters = {}) {
+    const searchParams = new URLSearchParams()
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        searchParams.set(key, value)
+      }
+    })
+
+    const queryString = searchParams.toString()
+    return apiRequest(`/users${queryString ? `?${queryString}` : ''}`)
+  },
   async updateMe(payload) {
     return apiRequest('/users/me', {
       method: 'PATCH',
@@ -169,6 +187,10 @@ export const tournamentService = {
       upcomingMatches: matches.map(normalizeMatch),
     }
   },
+  async getPlayerStats(eventId) {
+    const response = await apiRequest(`/tournaments/${eventId}/player-stats`)
+    return response.data || {}
+  },
   async create(payload) {
     const response = await apiRequest('/tournaments', {
       method: 'POST',
@@ -208,6 +230,12 @@ export const tournamentService = {
   },
   async generateBracket(id, payload = {}) {
     return apiRequest(`/tournaments/${id}/generate-bracket`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+  async regenerateBracket(id, payload = {}) {
+    return apiRequest(`/tournaments/${id}/regenerate-bracket`, {
       method: 'POST',
       body: JSON.stringify(payload),
     })

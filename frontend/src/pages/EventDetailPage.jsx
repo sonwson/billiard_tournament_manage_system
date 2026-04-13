@@ -5,9 +5,11 @@ import BracketBoard from '../components/BracketBoard'
 import EventTabs from '../components/EventTabs'
 import MatchResultsList from '../components/MatchResultsList'
 import PlayerCard from '../components/PlayerCard'
+import PlayerStatsTable from '../components/tournament/PlayerStatsTable'
 import RankingLeaderboard from '../components/RankingLeaderboard'
 import HeroBanner from '../components/ui/HeroBanner'
 import SectionHeader from '../components/ui/SectionHeader'
+import { useAsyncData } from '../hooks/useAsyncData'
 import { useEventData } from '../hooks/useEventData'
 import { tournamentService } from '../services/api'
 import { useAppStore } from '../store/appStore'
@@ -29,6 +31,11 @@ function EventDetailPage() {
   const [skillLevel, setSkillLevel] = useState('CN')
   const [matchView, setMatchView] = useState('list')
   const [matchScope, setMatchScope] = useState('all')
+
+  // Load player stats for standings tab
+  const playerStatsLoader = useMemo(() => () => tournamentService.getPlayerStats(eventId), [eventId])
+  const { data: playerStats } = useAsyncData(playerStatsLoader)
+  const hasPlayerStats = playerStats && Array.isArray(playerStats) && playerStats.length > 0
 
   const handleRegister = async () => {
     if (!accessToken) return
@@ -338,6 +345,16 @@ function EventDetailPage() {
               <PlayerCard key={player.id} player={player} />
             ))}
           </div>
+        ) : null}
+
+        {activeEventTab === 'Standings' ? (
+          hasPlayerStats ? (
+            <PlayerStatsTable stats={playerStats} />
+          ) : (
+            <div className="rounded-[1.75rem] border border-slate-200 bg-white p-12 text-center">
+              <p className="text-lg font-semibold text-slate-600">{t(locale, 'playerStats.noStats')}</p>
+            </div>
+          )
         ) : null}
       </section>
     </>

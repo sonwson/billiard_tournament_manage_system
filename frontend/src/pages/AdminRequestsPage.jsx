@@ -21,7 +21,7 @@ function AdminRequestsPage() {
   const pendingRequests = pendingData?.data || []
 
   const adminsLoader = useCallback(() => userService.listUsers({ role: 'tournament_admin', limit: 500 }), [])
-  const { data: adminsData, loading: adminsLoading, reload: reloadAdmins } = useAsyncData(adminsLoader)
+  const { data: adminsData, loading: adminsLoading, error: adminsError, reload: reloadAdmins } = useAsyncData(adminsLoader)
   const tournamentAdmins = adminsData?.data || []
 
   async function handleReview(userId, action) {
@@ -157,7 +157,8 @@ function AdminRequestsPage() {
         ) : (
           <>
             {adminsLoading ? <p className="text-sm text-slate-500">{t(locale, 'adminRequests.loading')}</p> : null}
-            {tournamentAdmins.length === 0 ? (
+            {adminsError ? <p className="text-sm font-medium text-red-600">{adminsError.message}</p> : null}
+            {!adminsLoading && !adminsError && tournamentAdmins.length === 0 ? (
               <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
                 {t(locale, 'adminRequests.noTournamentAdmins')}
               </div>

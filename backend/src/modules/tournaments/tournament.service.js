@@ -4,7 +4,6 @@ const errorCodes = require('../../common/errors/errorCodes');
 const { parsePagination } = require('../../common/utils/pagination');
 const { createSlug } = require('../../common/utils/slug');
 const { TOURNAMENT_STATUS } = require('../../common/constants/tournament');
-const { SKILL_LEVELS } = require('../../common/constants/skillLevel');
 const { isSuperAdminRole } = require('../../common/constants/roles');
 const { assertTournamentAccess } = require('../../common/utils/tournamentAccess');
 const tournamentRepository = require('./tournament.repository');
@@ -39,6 +38,13 @@ function formatSkillLevelLabel(skillLevel) {
   return skillLevel || 'Open';
 }
 
+function getUnifiedBracketLabel(format) {
+  if (format === 'round_robin') return 'League Stage';
+  if (format === 'group_knockout') return 'Group Stage';
+  if (format === 'double_elimination') return 'Winner Bracket';
+  return 'Main Bracket';
+}
+
 function formatKnockoutRoundLabel(fieldSize) {
   if (fieldSize <= 2) return 'Final';
   if (fieldSize === 4) return 'Semi-final';
@@ -49,6 +55,94 @@ function formatKnockoutRoundLabel(fieldSize) {
 function resolveRaceTo(roundNumber, tournament, fallbackRaceTo) {
   const fromRules = (tournament?.raceToRules || []).find((item) => item.roundNumber === roundNumber)?.raceTo;
   return fromRules || fallbackRaceTo || 5;
+}
+
+// Helper: map knockout size to stage label
+function knockoutSizeToStage(size) {
+  const map = { 2: 'last_2', 4: 'last_4', 8: 'last_8', 16: 'last_16', 32: 'last_32', 64: 'last_64', 128: 'last_128' };
+  return map[size] || 'last_16';
+}
+
+// Helper: map round-robin round number to stage label
+function roundRobinRoundToStage(roundNumber) {
+  if (roundNumber >= 1 && roundNumber <= 10) {
+    return `round_robin_round_${roundNumber}`;
+  }
+  return 'league_round';
+}
+
+// Helper: get knockout round label
+function getKnockoutRoundLabel(size) {
+  const map = { 2: 'Final', 4: 'Semi-final', 8: 'Quarter-final', 16: 'Last 16', 32: 'Last 32', 64: 'Last 64', 128: 'Last 128' };
+  return map[size] || `Last ${size}`;
+}
+
+// Helper: calculate player stats from completed matches
+async function calculatePlayerStats(tournamentId, matches) {
+  const completedMatches = matches.filter((m) => m.status === 'completed');
+  const stats = {};
+
+  for (const match of completedMatches) {
+    // Process player1
+    if (match.player1Id) {
+      const p1Id = match.player1Id.toString();
+      if (!stats[p1Id]) {
+        stats[p1Id] = { playerId: p1Id, wins: 0, losses: 0, racesWon: 0, racesLost: 0 };
+      }
+      stats[p1Id].racesWon += match.player1Score || 0;
+      stats[p1Id].racesLost += match.player2Score || 0;
+      if (match.winnerPlayerId && match.winnerPlayerId.toString() === p1Id) {
+        stats[p1Id].wins += 1;
+      } else if (match.loserPlayerId && match.loserPlayerId.toString() === p1Id) {
+        stats[p1Id].losses += 1;
+      }
+    }
+    // Process player2
+    if (match.player2Id) {
+      const p2Id = match.player2Id.toString();
+      if (!stats[p2Id]) {
+        stats[p2Id] = { playerId: p2Id, wins: 0, losses: 0, racesWon: 0, racesLost: 0 };
+      }
+      stats[p2Id].racesWon += match.player2Score || 0;
+      stats[p2Id].racesLost += match.player1Score || 0;
+      if (match.winnerPlayerId && match.winnerPlayerId.toString() === p2Id) {
+        stats[p2Id].wins += 1;
+      } else if (match.loserPlayerId && match.loserPlayerId.toString() === p2Id) {
+        stats[p2Id].losses += 1;
+      }
+    }
+  }
+
+  // Calculate points (1 point per win) and race diff
+  const result = Object.values(stats).map((s) => ({
+    ...s,
+    points: s.wins,
+    raceDiff: s.racesWon - s.racesLost,
+    matchesPlayed: s.wins + s.losses,
+  }));
+
+  return result;
+}
+
+// Helper: select top N qualifiers based on points, tie-break by race diff
+function selectQualifiers(stats, playerIds, qualifiersCount) {
+  const playerStatsMap = new Map(stats.map((s) => [s.playerId, s]));
+
+  // Build list with all players (including those with 0 stats)
+  const allPlayers = playerIds.map((id) => {
+    const idStr = id.toString();
+    const s = playerStatsMap.get(idStr) || { playerId: idStr, wins: 0, losses: 0, points: 0, racesWon: 0, racesLost: 0, raceDiff: 0, matchesPlayed: 0 };
+    return s;
+  });
+
+  // Sort by points desc, then raceDiff desc
+  allPlayers.sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    if (b.raceDiff !== a.raceDiff) return b.raceDiff - a.raceDiff;
+    return b.racesWon - a.racesWon;
+  });
+
+  return allPlayers.slice(0, qualifiersCount).map((p) => p.playerId);
 }
 
 function normalizeDoubleEliminationSettings(input = {}) {
@@ -98,13 +192,6 @@ async function attachActualPlayerCounts(tournaments) {
       currentPlayerCount,
     };
   });
-}
-
-function groupRegistrationsBySkill(registrations) {
-  return SKILL_LEVELS.reduce((acc, skillLevel) => {
-    acc[skillLevel] = registrations.filter((registration) => registration.skillLevel === skillLevel);
-    return acc;
-  }, {});
 }
 
 function buildRoundRobinRounds(playerIds) {
@@ -275,11 +362,11 @@ async function createRoundRobinBracketGroup({
   raceTo,
   actorId,
   roundNumberBase = 300,
-  stage = 'league_round',
   roundLabelBuilder = (roundNumber) => `Round ${roundNumber}`,
+  roundRobinRounds = 1, // Number of full round-robin cycles
 }) {
-  const rounds = buildRoundRobinRounds(playerIds);
-  if (!rounds.length) {
+  const singleRound = buildRoundRobinRounds(playerIds);
+  if (!singleRound.length) {
     return {
       skillLevel,
       bracketLabel,
@@ -290,19 +377,41 @@ async function createRoundRobinBracketGroup({
     };
   }
 
+  // Generate N rounds of round-robin
+  const allRounds = [];
+  for (let cycle = 0; cycle < roundRobinRounds; cycle += 1) {
+    // For each cycle, rotate starting position to vary home/away
+    const rotation = [...playerIds];
+    if (cycle > 0) {
+      // Swap positions for variety in subsequent rounds
+      for (let i = 0; i < cycle && rotation.length > 1; i += 1) {
+        const temp = rotation[0];
+        rotation[0] = rotation[rotation.length - 1];
+        rotation[rotation.length - 1] = temp;
+      }
+    }
+    const cycleRounds = buildRoundRobinRounds(rotation);
+    allRounds.push(...cycleRounds);
+  }
+
   const matches = [];
-  rounds.forEach((pairs, roundIndex) => {
-    pairs.forEach((pair, pairIndex) => {
+  let matchNumber = 1;
+  allRounds.forEach((pairs, roundIndex) => {
+    const cycleNumber = Math.floor(roundIndex / singleRound.length) + 1;
+    const roundInCycle = (roundIndex % singleRound.length) + 1;
+    const stageLabel = roundRobinRoundToStage(cycleNumber);
+
+    pairs.forEach((pair) => {
       matches.push({
         tournamentId,
         skillLevel,
         bracketLabel,
         roundNumber: roundNumberBase + roundIndex,
-        roundLabel: roundLabelBuilder(roundIndex + 1),
-        stage,
+        roundLabel: roundLabelBuilder(cycleNumber, roundInCycle),
+        stage: stageLabel,
         bracketType: 'main',
-        matchNumber: pairIndex + 1,
-        raceTo: resolveRaceTo(roundIndex + 1, tournament, raceTo),
+        matchNumber,
+        raceTo: resolveRaceTo(cycleNumber, tournament, raceTo),
         scheduledAt: tournamentStartAt || null,
         player1Id: pair.player1Id,
         player2Id: pair.player2Id,
@@ -310,6 +419,7 @@ async function createRoundRobinBracketGroup({
         createdBy: actorId,
         updatedBy: actorId,
       });
+      matchNumber += 1;
     });
   });
 
@@ -319,7 +429,141 @@ async function createRoundRobinBracketGroup({
     bracketLabel,
     players: playerIds.length,
     matchesCreated: createdMatches.length,
-    totalRounds: rounds.length,
+    totalRounds: allRounds.length,
+    roundRobinRounds,
+    skipped: false,
+    createdMatches,
+  };
+}
+
+// Create knockout bracket for round-robin qualifiers
+async function createRoundRobinKnockoutBracket({
+  tournament,
+  tournamentId,
+  tournamentStartAt,
+  qualifierPlayerIds,
+  skillLevel,
+  bracketLabel,
+  raceTo,
+  actorId,
+  knockoutStartRound, // e.g., 16 = Last 16
+  roundNumberBase = 500,
+}) {
+  if (!qualifierPlayerIds || qualifierPlayerIds.length < 2) {
+    return {
+      skillLevel,
+      bracketLabel,
+      qualifiersCount: 0,
+      matchesCreated: 0,
+      skipped: true,
+    };
+  }
+
+  // Determine bracket size: next power of 2 >= qualifier count, capped at knockoutStartRound
+  const bracketSize = Math.min(
+    nextPowerOfTwo(qualifierPlayerIds.length),
+    knockoutStartRound || qualifierPlayerIds.length,
+  );
+
+  // Calculate total rounds in knockout
+  const totalKnockoutRounds = Math.log2(bracketSize);
+
+  // Pad qualifiers with nulls if needed
+  const slots = [...qualifierPlayerIds, ...Array(bracketSize - qualifierPlayerIds.length).fill(null)];
+  const matches = [];
+
+  for (let localRoundNumber = 1; localRoundNumber <= totalKnockoutRounds; localRoundNumber += 1) {
+    const matchCount = bracketSize / (2 ** localRoundNumber);
+    const fieldSize = bracketSize / (2 ** (localRoundNumber - 1));
+    const stageLabel = knockoutSizeToStage(fieldSize);
+    const roundLabel = getKnockoutRoundLabel(fieldSize);
+
+    for (let matchNumber = 1; matchNumber <= matchCount; matchNumber += 1) {
+      let player1Id = null;
+      let player2Id = null;
+
+      if (localRoundNumber === 1) {
+        player1Id = slots[(matchNumber - 1) * 2] || null;
+        player2Id = slots[((matchNumber - 1) * 2) + 1] || null;
+      }
+
+      matches.push({
+        tournamentId,
+        skillLevel,
+        bracketLabel,
+        roundNumber: roundNumberBase + localRoundNumber - 1,
+        roundLabel,
+        stage: stageLabel,
+        bracketType: 'final',
+        matchNumber,
+        raceTo: resolveRaceTo(localRoundNumber, tournament, raceTo),
+        scheduledAt: tournamentStartAt || null,
+        player1Id,
+        player2Id,
+        status: player1Id && player2Id ? 'ready' : 'scheduled',
+        createdBy: actorId,
+        updatedBy: actorId,
+      });
+    }
+  }
+
+  const createdMatches = await matchRepository.createMany(matches);
+
+  // Link matches (winner advances)
+  const grouped = createdMatches.reduce((acc, match) => {
+    const localRoundNumber = match.roundNumber - roundNumberBase + 1;
+    if (!acc[localRoundNumber]) acc[localRoundNumber] = [];
+    acc[localRoundNumber].push(match);
+    return acc;
+  }, {});
+
+  for (let localRoundNumber = 1; localRoundNumber < totalKnockoutRounds; localRoundNumber += 1) {
+    const currentRound = grouped[localRoundNumber].sort((a, b) => a.matchNumber - b.matchNumber);
+    const nextRound = grouped[localRoundNumber + 1].sort((a, b) => a.matchNumber - b.matchNumber);
+
+    for (let index = 0; index < currentRound.length; index += 1) {
+      const nextMatch = nextRound[Math.floor(index / 2)];
+      currentRound[index].nextMatchId = nextMatch._id;
+      currentRound[index].nextMatchSlot = (index % 2) + 1;
+      await currentRound[index].save();
+    }
+  }
+
+  // Auto-advance byes
+  for (const firstRoundMatch of grouped[1] || []) {
+    if (firstRoundMatch.player1Id && !firstRoundMatch.player2Id) {
+      const nextMatch = await matchRepository.findById(firstRoundMatch.nextMatchId);
+      if (nextMatch) {
+        nextMatch[`player${firstRoundMatch.nextMatchSlot}Id`] = firstRoundMatch.player1Id;
+        nextMatch.status = nextMatch.player1Id && nextMatch.player2Id ? 'ready' : nextMatch.status;
+        await nextMatch.save();
+      }
+      firstRoundMatch.winnerPlayerId = firstRoundMatch.player1Id;
+      firstRoundMatch.status = 'completed';
+      firstRoundMatch.completedAt = new Date();
+      await firstRoundMatch.save();
+    }
+    if (!firstRoundMatch.player1Id && firstRoundMatch.player2Id) {
+      const nextMatch = await matchRepository.findById(firstRoundMatch.nextMatchId);
+      if (nextMatch) {
+        nextMatch[`player${firstRoundMatch.nextMatchSlot}Id`] = firstRoundMatch.player2Id;
+        nextMatch.status = nextMatch.player1Id && nextMatch.player2Id ? 'ready' : nextMatch.status;
+        await nextMatch.save();
+      }
+      firstRoundMatch.winnerPlayerId = firstRoundMatch.player2Id;
+      firstRoundMatch.status = 'completed';
+      firstRoundMatch.completedAt = new Date();
+      await firstRoundMatch.save();
+    }
+  }
+
+  return {
+    skillLevel,
+    bracketLabel,
+    qualifiersCount: qualifierPlayerIds.length,
+    matchesCreated: createdMatches.length,
+    totalKnockoutRounds,
+    bracketSize,
     skipped: false,
   };
 }
@@ -960,8 +1204,8 @@ async function generateBracket(id, payload, actor) {
     { tournamentId: id, status: 'approved' },
     {
       sort: payload.seedingMode === 'ranking'
-        ? { skillLevel: 1, 'snapshot.rankingPoints': -1, registeredAt: 1 }
-        : { skillLevel: 1, registeredAt: 1 },
+        ? { 'snapshot.rankingPoints': -1, registeredAt: 1 }
+        : { registeredAt: 1 },
       limit: 512,
     },
   );
@@ -970,61 +1214,88 @@ async function generateBracket(id, payload, actor) {
     throw new ApiError(StatusCodes.BAD_REQUEST, errorCodes.BAD_REQUEST, 'At least 2 approved players are required');
   }
 
-  const registrationsBySkill = groupRegistrationsBySkill(registrations);
-
+  const unifiedSkillLevel = null;
+  const unifiedBracketLabel = getUnifiedBracketLabel(tournament.format);
   const bracketGroups = [];
-  for (const skillLevel of Object.keys(registrationsBySkill)) {
-    if (!registrationsBySkill[skillLevel].length) continue;
-    let result = null;
+  let result = null;
 
-    if (tournament.format === 'single_elimination') {
-      result = await createSingleEliminationBracketGroup({
-        tournament,
-        tournamentId: tournament._id,
-        tournamentStartAt: tournament.startAt,
-        playerIds: registrationsBySkill[skillLevel].map((item) => item.playerId),
-        skillLevel,
-        bracketLabel: formatSkillLevelLabel(skillLevel),
-        raceTo: payload.raceTo,
-        actorId: actor.sub,
-        roundLabelBuilder: (roundNumber, fieldSize) => formatKnockoutRoundLabel(fieldSize),
-      });
-    } else if (tournament.format === 'double_elimination') {
-      result = await createDoubleEliminationBracketGroup({
-        tournament,
-        tournamentId: tournament._id,
-        tournamentStartAt: tournament.startAt,
-        registrations: registrationsBySkill[skillLevel],
-        skillLevel,
-        raceTo: payload.raceTo,
-        actorId: actor.sub,
-      });
-    } else if (tournament.format === 'round_robin') {
-      result = await createRoundRobinBracketGroup({
-        tournament,
-        tournamentId: tournament._id,
-        tournamentStartAt: tournament.startAt,
-        playerIds: registrationsBySkill[skillLevel].map((item) => item.playerId),
-        skillLevel,
-        bracketLabel: formatSkillLevelLabel(skillLevel),
-        raceTo: payload.raceTo,
-        actorId: actor.sub,
-      });
-    } else if (tournament.format === 'group_knockout') {
-      result = await createGroupKnockoutBracketGroup({
-        tournament,
-        tournamentId: tournament._id,
-        tournamentStartAt: tournament.startAt,
-        registrations: registrationsBySkill[skillLevel],
-        skillLevel,
-        raceTo: payload.raceTo,
-        actorId: actor.sub,
-      });
-    }
+  if (tournament.format === 'single_elimination') {
+    result = await createSingleEliminationBracketGroup({
+      tournament,
+      tournamentId: tournament._id,
+      tournamentStartAt: tournament.startAt,
+      playerIds: registrations.map((item) => item.playerId),
+      skillLevel: unifiedSkillLevel,
+      bracketLabel: unifiedBracketLabel,
+      raceTo: payload.raceTo,
+      actorId: actor.sub,
+      roundLabelBuilder: (roundNumber, fieldSize) => formatKnockoutRoundLabel(fieldSize),
+    });
+  } else if (tournament.format === 'double_elimination') {
+    result = await createDoubleEliminationBracketGroup({
+      tournament,
+      tournamentId: tournament._id,
+      tournamentStartAt: tournament.startAt,
+      registrations,
+      skillLevel: unifiedSkillLevel,
+      raceTo: payload.raceTo,
+      actorId: actor.sub,
+    });
+  } else if (tournament.format === 'round_robin') {
+    const roundRobinRounds = tournament.bracketSettings?.roundRobinRounds || 1;
+    const qualifiersCount = tournament.bracketSettings?.qualifiersCount || null;
+    const knockoutStartRound = tournament.bracketSettings?.knockoutStartRound || null;
 
-    if (result) {
-      bracketGroups.push(result);
+    result = await createRoundRobinBracketGroup({
+      tournament,
+      tournamentId: tournament._id,
+      tournamentStartAt: tournament.startAt,
+      playerIds: registrations.map((item) => item.playerId),
+      skillLevel: unifiedSkillLevel,
+      bracketLabel: unifiedBracketLabel,
+      raceTo: payload.raceTo,
+      actorId: actor.sub,
+      roundRobinRounds,
+      roundLabelBuilder: (cycleNumber, roundInCycle) => `Round ${cycleNumber} - Flight ${roundInCycle}`,
+    });
+
+    if (qualifiersCount && qualifiersCount >= 2) {
+      const allMatches = result.createdMatches || [];
+      const playerIds = registrations.map((item) => item.playerId);
+      const stats = await calculatePlayerStats(tournament._id, allMatches);
+      const qualifierPlayerIds = selectQualifiers(stats, playerIds, qualifiersCount);
+
+      const knockoutResult = await createRoundRobinKnockoutBracket({
+        tournament,
+        tournamentId: tournament._id,
+        tournamentStartAt: tournament.startAt,
+        qualifierPlayerIds,
+        skillLevel: unifiedSkillLevel,
+        bracketLabel: 'Knockout Bracket',
+        raceTo: payload.raceTo,
+        actorId: actor.sub,
+        knockoutStartRound,
+      });
+
+      if (!result.skipped) {
+        result.knockoutResult = knockoutResult;
+        result.matchesCreated += knockoutResult.matchesCreated || 0;
+      }
     }
+  } else if (tournament.format === 'group_knockout') {
+    result = await createGroupKnockoutBracketGroup({
+      tournament,
+      tournamentId: tournament._id,
+      tournamentStartAt: tournament.startAt,
+      registrations,
+      skillLevel: unifiedSkillLevel,
+      raceTo: payload.raceTo,
+      actorId: actor.sub,
+    });
+  }
+
+  if (result) {
+    bracketGroups.push(result);
   }
 
   tournament.bracketGeneratedAt = new Date();
@@ -1036,6 +1307,98 @@ async function generateBracket(id, payload, actor) {
     matchesCreated: bracketGroups.reduce((sum, item) => sum + item.matchesCreated, 0),
     bracketGroups,
   };
+}
+
+// Regenerate bracket (delete existing matches and create new ones)
+async function regenerateBracket(id, payload, actor) {
+  const tournament = await tournamentRepository.findById(id);
+  if (!tournament) {
+    throw new ApiError(StatusCodes.NOT_FOUND, errorCodes.NOT_FOUND, 'Tournament not found');
+  }
+  assertTournamentAccess(tournament, actor);
+  if (tournament.status !== TOURNAMENT_STATUS.CLOSED_REGISTRATION) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, errorCodes.BAD_REQUEST, 'Tournament must be closed registration before bracket regeneration');
+  }
+  if (!tournament.bracketGeneratedAt) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, errorCodes.BAD_REQUEST, 'No bracket to regenerate');
+  }
+
+  // Delete all existing matches for this tournament
+  await matchRepository.deleteMany({ tournamentId: tournament._id });
+
+  // Reset bracketGeneratedAt so generateBracket can run again
+  tournament.bracketGeneratedAt = null;
+  await tournament.save();
+
+  // Generate new bracket
+  return generateBracket(id, payload, actor);
+}
+
+// Get player stats for a tournament (for round-robin standings)
+async function getPlayerStats(tournamentId) {
+  const tournament = await tournamentRepository.findById(tournamentId);
+  if (!tournament) {
+    throw new ApiError(StatusCodes.NOT_FOUND, errorCodes.NOT_FOUND, 'Tournament not found');
+  }
+
+  // Get approved players
+  const registrations = await registrationRepository.findMany(
+    { tournamentId, status: 'approved' },
+    { sort: { skillLevel: 1, registeredAt: 1 }, limit: 500, populatePlayer: true },
+  );
+
+  // Get all matches for this tournament
+  const matches = await matchRepository.findMany(
+    { tournamentId },
+    { sort: { skillLevel: 1, roundNumber: 1, matchNumber: 1 }, limit: 5000, populatePlayers: true },
+  );
+
+  // Calculate stats from all matches
+  const allStats = await calculatePlayerStats(tournamentId, matches);
+  const statsMap = new Map(allStats.map((s) => [s.playerId, s]));
+
+  // Build full player list with stats (no skill level grouping)
+  const playerStats = registrations.map((reg) => {
+    const playerIdStr = reg.playerId.toString();
+    const s = statsMap.get(playerIdStr) || {
+      playerId: playerIdStr,
+      wins: 0,
+      losses: 0,
+      points: 0,
+      racesWon: 0,
+      racesLost: 0,
+      raceDiff: 0,
+      matchesPlayed: 0,
+    };
+
+    return {
+      playerId: reg.playerId,
+      player: reg.player || null,
+      skillLevel: reg.skillLevel || 'Open',
+      seedingNumber: reg.seedingNumber || null,
+      wins: s.wins,
+      losses: s.losses,
+      points: s.points,
+      racesWon: s.racesWon,
+      racesLost: s.racesLost,
+      raceDiff: s.raceDiff,
+      matchesPlayed: s.matchesPlayed,
+    };
+  });
+
+  // Sort by points desc, raceDiff desc, racesWon desc
+  playerStats.sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    if (b.raceDiff !== a.raceDiff) return b.raceDiff - a.raceDiff;
+    return b.racesWon - a.racesWon;
+  });
+
+  // Add rank
+  playerStats.forEach((p, index) => {
+    p.rank = index + 1;
+  });
+
+  return playerStats;
 }
 
 module.exports = {
@@ -1052,6 +1415,8 @@ module.exports = {
   restoreTournament,
   deleteTournamentPermanently,
   generateBracket,
+  regenerateBracket,
+  getPlayerStats,
 };
 
 

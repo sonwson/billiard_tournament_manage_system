@@ -1,14 +1,20 @@
 import { Minus, Move, Plus } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
-import { formatMatchTime, formatSkillLevel } from '../utils/formatters'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { formatMatchTime } from '../utils/formatters'
 
 function isKnockoutMatch(match) {
   const stage = String(match.stage || '').toLowerCase()
   const label = String(match.roundLabel || match.round || '').toLowerCase()
 
   return [
+    'round_of_128',
+    'round_of_64',
     'round_of_32',
     'round_of_16',
+    'last_128',
+    'last_64',
+    'last_32',
+    'last_16',
     'quarter_final',
     'semi_final',
     'final',
@@ -30,17 +36,17 @@ function MatchNode({ match, player1Name, player2Name, player1SkillLevel, player2
         ? 'bg-emerald-500/10 text-emerald-200 border border-emerald-400/20'
         : 'bg-white/8 text-slate-300 border border-white/10'
 
-  const displayPlayer1Name = player1Name && player1Name !== 'TBD' && player1SkillLevel 
-    ? `${player1Name} - ${player1SkillLevel}` 
+  const displayPlayer1Name = player1Name && player1Name !== 'TBD'
+    ? player1SkillLevel ? `${player1Name} - ${player1SkillLevel}` : player1Name
     : player1Name
-  const displayPlayer2Name = player2Name && player2Name !== 'TBD' && player2SkillLevel 
-    ? `${player2Name} - ${player2SkillLevel}` 
+  const displayPlayer2Name = player2Name && player2Name !== 'TBD'
+    ? player2SkillLevel ? `${player2Name} - ${player2SkillLevel}` : player2Name
     : player2Name
 
   return (
     <article
       ref={(node) => registerRef(match.id, node)}
-      className="relative min-w-[230px] rounded-[1rem] border border-[#2B3958] bg-[#16233D] p-3 text-white shadow-[0_25px_50px_-30px_rgba(15,23,42,0.9)]"
+      className="relative w-full rounded-[1rem] border border-[#2B3958] bg-[#16233D] p-3 text-white shadow-[0_25px_50px_-30px_rgba(15,23,42,0.9)]"
     >
       <div className="mb-3 flex items-start justify-between gap-3 text-[10px] text-slate-300">
         <div>
@@ -92,16 +98,14 @@ function BracketSection({ title, matches, resolvePlayerName }) {
     scrollLeft: 0,
     scrollTop: 0,
   })
-  const [zoom, setZoom] = useState(1)
-
   const skillLevelMap = useMemo(() => {
     const map = {}
     matches.forEach(match => {
-      if (match.player1Id && match.skillLevel) {
-        map[match.player1Id] = match.skillLevel
+      if (match.player1Id) {
+        map[match.player1Id] = match.player1SkillLevel || match.skillLevel || null
       }
-      if (match.player2Id && match.skillLevel) {
-        map[match.player2Id] = match.skillLevel
+      if (match.player2Id) {
+        map[match.player2Id] = match.player2SkillLevel || match.skillLevel || null
       }
     })
     return map
@@ -133,12 +137,26 @@ function BracketSection({ title, matches, resolvePlayerName }) {
       }))
   ), [matches])
 
+  const baseZoom = useMemo(() => {
+    if (matches.length >= 96 || rounds.length >= 7) return 0.72
+    if (matches.length >= 48 || rounds.length >= 6) return 0.82
+    if (matches.length >= 24 || rounds.length >= 5) return 0.9
+    return 1
+  }, [matches.length, rounds.length])
+  const [zoom, setZoom] = useState(baseZoom)
+
+  useEffect(() => {
+    setZoom(baseZoom)
+  }, [baseZoom])
+
   const layout = useMemo(() => {
-    const columnWidth = 250
-    const columnGap = 112
-    const cardHeight = 168
-    const verticalGap = 78
-    const paddingY = 48
+    const largeKnockout = rounds.length >= 7 || matches.length >= 96
+    const mediumKnockout = !largeKnockout && (rounds.length >= 6 || matches.length >= 48)
+    const columnWidth = largeKnockout ? 214 : mediumKnockout ? 228 : 250
+    const columnGap = largeKnockout ? 72 : mediumKnockout ? 88 : 112
+    const cardHeight = largeKnockout ? 154 : mediumKnockout ? 160 : 168
+    const verticalGap = largeKnockout ? 56 : mediumKnockout ? 66 : 78
+    const paddingY = largeKnockout ? 36 : 48
     const incomingByMatchId = matches.reduce((acc, match) => {
       if (match.nextMatchId) {
         if (!acc[match.nextMatchId]) acc[match.nextMatchId] = []
@@ -279,7 +297,7 @@ function BracketSection({ title, matches, resolvePlayerName }) {
 
       <div
         ref={viewportRef}
-        className="no-scrollbar overflow-auto rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
+        className="no-scrollbar overflow-auto rounded-[1.75rem] border border-slate-200 bg-white p-3 sm:p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
         style={{ cursor: 'grab' }}
         onMouseDown={handlePointerDown}
         onMouseMove={handlePointerMove}
@@ -364,11 +382,11 @@ function StandardBracketSection({ title, matches, resolvePlayerName }) {
   const skillLevelMap = useMemo(() => {
     const map = {}
     matches.forEach(match => {
-      if (match.player1Id && match.skillLevel) {
-        map[match.player1Id] = match.skillLevel
+      if (match.player1Id) {
+        map[match.player1Id] = match.player1SkillLevel || match.skillLevel || null
       }
-      if (match.player2Id && match.skillLevel) {
-        map[match.player2Id] = match.skillLevel
+      if (match.player2Id) {
+        map[match.player2Id] = match.player2SkillLevel || match.skillLevel || null
       }
     })
     return map
@@ -410,62 +428,43 @@ function StandardBracketSection({ title, matches, resolvePlayerName }) {
 }
 
 function BracketBoard({ matches, resolvePlayerName }) {
-  const groupedBySkill = (matches || []).reduce((acc, match) => {
-    const skillLevel = match.skillLevel || 'open'
-    if (!acc[skillLevel]) acc[skillLevel] = []
-    acc[skillLevel].push(match)
+  // Show all matches in one unified bracket (no skill level grouping)
+  const brackets = (matches || []).reduce((acc, match) => {
+    const bracketType = match.bracketType || 'main'
+    if (!acc[bracketType]) acc[bracketType] = []
+    acc[bracketType].push(match)
     return acc
   }, {})
 
   return (
     <div className="space-y-8">
-      {Object.entries(groupedBySkill).map(([skillLevel, skillMatches]) => {
-        const brackets = skillMatches.reduce((acc, match) => {
-          const bracketType = match.bracketType || 'main'
-          if (!acc[bracketType]) acc[bracketType] = []
-          acc[bracketType].push(match)
-          return acc
-        }, {})
+      {Object.entries(brackets).map(([bracketType, bracketMatches]) => {
+        const bracketTitle =
+          bracketType === 'loser'
+            ? 'Loser Bracket'
+            : bracketType === 'final'
+              ? 'Final Bracket'
+              : 'Winner Bracket'
+        const knockoutMatches = bracketMatches.filter(isKnockoutMatch)
+        const standardMatches = bracketMatches.filter((match) => !isKnockoutMatch(match))
 
         return (
-          <section key={skillLevel} className="rounded-[1.75rem] border border-slate-200 bg-white p-5">
-            <div className="mb-5">
-              <p className="text-xs font-bold uppercase tracking-[0.26em] text-[#EAB308]">Bracket View</p>
-              <h3 className="display-title mt-2 text-3xl text-[#0F172A]">{formatSkillLevel(skillLevel)}</h3>
-            </div>
-
-            <div className="space-y-8">
-              {Object.entries(brackets).map(([bracketType, bracketMatches]) => {
-                const bracketTitle =
-                  bracketType === 'loser'
-                    ? 'Loser Bracket'
-                    : bracketType === 'final'
-                      ? 'Final Bracket'
-                      : 'Winner Bracket'
-                const knockoutMatches = bracketMatches.filter(isKnockoutMatch)
-                const standardMatches = bracketMatches.filter((match) => !isKnockoutMatch(match))
-
-                return (
-                  <div key={bracketType} className="space-y-8">
-                    {standardMatches.length ? (
-                      <StandardBracketSection
-                        title={knockoutMatches.length ? `${bracketTitle} - Qualifier` : bracketTitle}
-                        matches={standardMatches}
-                        resolvePlayerName={resolvePlayerName}
-                      />
-                    ) : null}
-                    {knockoutMatches.length ? (
-                      <BracketSection
-                        title={bracketTitle}
-                        matches={knockoutMatches}
-                        resolvePlayerName={resolvePlayerName}
-                      />
-                    ) : null}
-                  </div>
-                )
-              })}
-            </div>
-          </section>
+          <div key={bracketType} className="space-y-8">
+            {standardMatches.length ? (
+              <StandardBracketSection
+                title={knockoutMatches.length ? `${bracketTitle} - Qualifier` : bracketTitle}
+                matches={standardMatches}
+                resolvePlayerName={resolvePlayerName}
+              />
+            ) : null}
+            {knockoutMatches.length ? (
+              <BracketSection
+                title={bracketTitle}
+                matches={knockoutMatches}
+                resolvePlayerName={resolvePlayerName}
+              />
+            ) : null}
+          </div>
         )
       })}
     </div>

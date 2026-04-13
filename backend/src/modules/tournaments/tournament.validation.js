@@ -29,8 +29,15 @@ const drawSizeValue = z.union([
 const bracketSettings = z.object({
   knockoutStartSize: drawSizeValue.optional().nullable(),
   drawSize: drawSizeValue.optional().nullable(),
+  // Round-robin settings
+  roundRobinRounds: z.number().int().min(1).max(10).optional(),
+  qualifiersCount: z.number().int().min(2).optional().nullable(),
+  knockoutStartRound: drawSizeValue.optional().nullable(),
 }).transform((value) => ({
   knockoutStartSize: value.knockoutStartSize ?? value.drawSize ?? null,
+  roundRobinRounds: value.roundRobinRounds ?? 1,
+  qualifiersCount: value.qualifiersCount ?? null,
+  knockoutStartRound: value.knockoutStartRound ?? null,
 }));
 
 const tournamentBodyShape = {

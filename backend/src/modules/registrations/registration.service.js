@@ -74,6 +74,13 @@ async function createRegistration(tournamentId, payload, authUser) {
 
   const registration = await registrationRepository.create(registrationPayload);
 
+  // Update player's skillLevel if they don't have one set yet
+  if (!player.skillLevel || player.skillLevel === 'CN') {
+    player.skillLevel = payload.skillLevel;
+    player.updatedBy = authUser.sub;
+    await player.save();
+  }
+
   if (isAdminDirectEntry) {
     tournament.approvedPlayerCount += 1;
     tournament.updatedBy = authUser.sub;

@@ -5,7 +5,7 @@ export const NAV_ITEMS = [
   { label: 'Players', path: '/players' },
 ]
 
-export const EVENT_TABS = ['Info', 'Matches', 'Ranking', 'Players']
+export const EVENT_TABS = ['Info', 'Matches', 'Ranking', 'Players', 'Standings']
 
 export const SKILL_LEVEL_OPTIONS = [
   { value: 'CN', label: 'CN' },

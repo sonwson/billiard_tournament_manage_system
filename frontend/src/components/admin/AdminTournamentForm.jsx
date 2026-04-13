@@ -50,6 +50,9 @@ const initialState = {
   },
   bracketSettings: {
     knockoutStartSize: 16,
+    roundRobinRounds: 1,
+    qualifiersCount: '',
+    knockoutStartRound: '',
   },
   raceToRules: {},
   prizeStructure: DEFAULT_PRIZE_ROWS,
@@ -131,6 +134,9 @@ function buildFormState(initialValues) {
     },
     bracketSettings: {
       knockoutStartSize: initialValues.bracketSettings?.knockoutStartSize || initialValues.bracketSettings?.drawSize || 16,
+      roundRobinRounds: initialValues.bracketSettings?.roundRobinRounds || 1,
+      qualifiersCount: initialValues.bracketSettings?.qualifiersCount || '',
+      knockoutStartRound: initialValues.bracketSettings?.knockoutStartRound || '',
     },
     raceToRules,
     prizeStructure: prizeStructure.length ? prizeStructure : DEFAULT_PRIZE_ROWS,
@@ -212,7 +218,7 @@ function AdminTournamentForm({ onSubmit, submitting, initialValues = null, mode 
       ...prev,
       bracketSettings: {
         ...prev.bracketSettings,
-        [key]: Number(value),
+        [key]: key === 'roundRobinRounds' ? Number(value) : (value ? Number(value) : ''),
       },
     }))
   }
@@ -353,6 +359,12 @@ function AdminTournamentForm({ onSubmit, submitting, initialValues = null, mode 
         formState.format === 'double_elimination'
           ? {
               knockoutStartSize: Number(formState.bracketSettings.knockoutStartSize || 16),
+            }
+          : formState.format === 'round_robin'
+          ? {
+              roundRobinRounds: Number(formState.bracketSettings.roundRobinRounds || 1),
+              qualifiersCount: formState.bracketSettings.qualifiersCount ? Number(formState.bracketSettings.qualifiersCount) : null,
+              knockoutStartRound: formState.bracketSettings.knockoutStartRound ? Number(formState.bracketSettings.knockoutStartRound) : null,
             }
           : {},
       raceToRules: Object.entries(formState.raceToRules)
@@ -574,6 +586,51 @@ function AdminTournamentForm({ onSubmit, submitting, initialValues = null, mode 
           </Field>
           <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600 md:col-span-2">
             {t(locale, 'tournamentForm.helper.doubleEliminationHint')}
+          </div>
+        </>
+      ) : null}
+      {formState.format === 'round_robin' ? (
+        <>
+          <Field label={t(locale, 'tournamentForm.fields.roundRobinRounds')}>
+            <input
+              className={getInputClassName('bracketSettings.roundRobinRounds')}
+              type="number"
+              min="1"
+              max="10"
+              value={formState.bracketSettings.roundRobinRounds}
+              onChange={(event) => updateBracketSetting('roundRobinRounds', event.target.value)}
+              placeholder="1"
+            />
+            <p className="mt-1 text-xs text-slate-500">{t(locale, 'tournamentForm.helper.roundRobinRoundsHint')}</p>
+          </Field>
+          <Field label={t(locale, 'tournamentForm.fields.qualifiersCount')}>
+            <input
+              className={getInputClassName('bracketSettings.qualifiersCount')}
+              type="number"
+              min="2"
+              value={formState.bracketSettings.qualifiersCount}
+              onChange={(event) => updateBracketSetting('qualifiersCount', event.target.value)}
+              placeholder={t(locale, 'tournamentForm.placeholders.qualifiersCount')}
+            />
+            <p className="mt-1 text-xs text-slate-500">{t(locale, 'tournamentForm.helper.qualifiersCountHint')}</p>
+          </Field>
+          <Field label={t(locale, 'tournamentForm.fields.knockoutStartRound')}>
+            <select
+              className={getInputClassName('bracketSettings.knockoutStartRound')}
+              value={formState.bracketSettings.knockoutStartRound}
+              onChange={(event) => updateBracketSetting('knockoutStartRound', event.target.value)}
+            >
+              <option value="">{t(locale, 'tournamentForm.options.knockoutStartRound.auto')}</option>
+              {[128, 64, 32, 16, 8, 4, 2].map((size) => (
+                <option key={size} value={size}>
+                  {t(locale, 'tournamentForm.lastSize', { size })}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-slate-500">{t(locale, 'tournamentForm.helper.knockoutStartRoundHint')}</p>
+          </Field>
+          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600 md:col-span-2">
+            {t(locale, 'tournamentForm.helper.roundRobinHint')}
           </div>
         </>
       ) : null}
