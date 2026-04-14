@@ -14,9 +14,6 @@ jobs:
   backend:
     name: Backend Docker build and lint
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -26,7 +23,7 @@ jobs:
 
       - name: Build backend Docker image
         run: |
-          docker build -t backend-image -f backend/Dockerfile .
+          docker build -t backend-image -f backend/Dockerfile backend
 
       - name: Run Backend Lint in Docker
         run: |
@@ -39,9 +36,6 @@ jobs:
   frontend:
     name: Frontend Docker build and lint
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -51,7 +45,7 @@ jobs:
 
       - name: Build frontend Docker image
         run: |
-          docker build -t frontend-image -f frontend/Dockerfile .
+          docker build -t frontend-image -f frontend/Dockerfile frontend
 
       - name: Run Frontend Lint in Docker
         run: |
