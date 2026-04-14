@@ -14,12 +14,17 @@ jobs:
   backend:
     name: Backend Docker build and lint
     runs-on: ubuntu-latest
+    # CHÚ Ý: Đặt thư mục làm việc mặc định cho toàn bộ job này là ./backend
+    defaults:
+      run:
+        working-directory: ./backend
+        
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4 # Đã sửa thành v4
 
       - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3 # Đã sửa thành v3
 
       - name: Build backend Docker image
         run: |
@@ -36,12 +41,17 @@ jobs:
   frontend:
     name: Frontend Docker build and lint
     runs-on: ubuntu-latest
+    # CHÚ Ý: Đặt thư mục làm việc mặc định cho toàn bộ job này là ./frontend
+    defaults:
+      run:
+        working-directory: ./frontend
+        
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Build frontend Docker image
         run: |
