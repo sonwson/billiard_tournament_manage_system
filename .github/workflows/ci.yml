@@ -47,9 +47,8 @@ jobs:
           docker run --rm backend-image node -e "require('./src/app'); console.log('APP_LOAD_OK')"
 
   frontend:
-    name: Frontend Docker build and lint
+    name: Frontend Lint and Docker build
     runs-on: ubuntu-latest
-    # CHÚ Ý: Đặt thư mục làm việc mặc định cho toàn bộ job này là ./frontend
     defaults:
       run:
         working-directory: ./frontend
@@ -58,19 +57,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 1. Cài đặt Node.js trực tiếp trên máy ảo của GitHub
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Trùng với phiên bản Node bạn dùng
+
+      # 2. Cài đầy đủ thư viện và chạy Lint ở ngoài Docker
+      - name: Install Dependencies and Run Lint
+        run: |
+          npm ci
+          npm run lint
+
+      # 3. NẾU LINT THÀNH CÔNG, mới tiến hành build Docker image
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build frontend Docker image
         run: |
           docker build -t frontend-image .
-
-      - name: Run Frontend Lint in Docker
-        run: |
-          docker run --rm frontend-image npm run lint
-
-      - name: Build Frontend in Docker
-        run: |
-          docker run --rm frontend-image npm run build
         env:
           VITE_API_BASE_URL: https://example.onrender.com/api/v1
+
+      # 4. Smoke Test cho Nginx (Không dùng npm nữa)
+      - name: Smoke Test Frontend
+        run: |
+          # Chạy container ngầm (-d), map port 8080 của máy thật vào port 80 của Nginx
+          docker run -d -p 8080:80 --name test-fe frontend-image
+          
+          # Đợi 2 giây cho Nginx khởi động hẳn
+          sleep 2
+          
+          # Bắn thử một request curl xem web có trả về file HTML không (mã 200 OK)
+          curl -f http://localhost:8080
+          
+          # Dọn dẹp container sau khi test xong
+          docker rm -f test-fe
