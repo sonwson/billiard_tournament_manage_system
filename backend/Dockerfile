@@ -6,6 +6,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev 
 
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # ===== 2) Production Stage =====
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
