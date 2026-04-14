@@ -23,7 +23,7 @@ jobs:
 
       - name: Build backend Docker image
         run: |
-          docker build -t backend-image -f backend/Dockerfile backend
+          docker build -t backend-image -f ./backend/Dockerfile ./backend
 
       - name: Run Backend Lint in Docker
         run: |
@@ -45,7 +45,7 @@ jobs:
 
       - name: Build frontend Docker image
         run: |
-          docker build -t frontend-image -f frontend/Dockerfile frontend
+          docker build -t frontend-image -f ./frontend/Dockerfile ./frontend
 
       - name: Run Frontend Lint in Docker
         run: |
