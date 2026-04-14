@@ -12,27 +12,35 @@ concurrency:
 
 jobs:
   backend:
-    name: Backend Docker build and lint
+    name: Backend Lint and Docker build
     runs-on: ubuntu-latest
-    # CHÚ Ý: Đặt thư mục làm việc mặc định cho toàn bộ job này là ./backend
     defaults:
       run:
         working-directory: ./backend
         
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # Đã sửa thành v4
+        uses: actions/checkout@v4
 
+      # 1. Cài đặt Node.js trực tiếp trên máy ảo của GitHub
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Trùng với phiên bản Node bạn dùng
+
+      # 2. Cài đầy đủ thư viện (bao gồm cả devDependencies) và chạy Lint
+      - name: Install Dependencies and Run Lint
+        run: |
+          npm ci
+          npm run lint
+
+      # 3. NẾU LINT THÀNH CÔNG, mới tiến hành build Docker image
       - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3 # Đã sửa thành v3
+        uses: docker/setup-buildx-action@v3
 
       - name: Build backend Docker image
         run: |
           docker build -t backend-image .
-
-      - name: Run Backend Lint in Docker
-        run: |
-          docker run --rm backend-image npm run lint
 
       - name: Smoke Test Backend
         run: |
