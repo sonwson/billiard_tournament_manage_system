@@ -1,4 +1,5 @@
 const app = require('./app');
+const cors = require('cors');
 const env = require('./config/env');
 const logger = require('./config/logger');
 const { connectDatabase } = require('./config/db');
