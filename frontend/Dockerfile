@@ -8,7 +8,7 @@ COPY frontend/package*.json ./
 RUN npm ci --only=production
 
 # Copy toàn bộ mã nguồn từ thư mục frontend
-COPY ./frontend/ ./
+COPY . .
 
 # Build frontend (Vite, React, Angular, v.v.)
 RUN npm run build

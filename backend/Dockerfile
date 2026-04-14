@@ -13,15 +13,13 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=5000
 
-# Copy node_modules từ stage builder sang
-COPY --from=builder /app/node_modules ./node_modules
-
-# Copy source code của ứng dụng
+# 1. Copy toàn bộ source code vào TRƯỚC
 COPY . .
 
-# Chuyển sang user 'node' để tăng cường bảo mật (Không chạy bằng root)
-USER node
+# 2. Copy node_modules chuẩn từ builder đè vào SAU
+COPY --from=builder /app/node_modules ./node_modules
 
+USER node
 EXPOSE 5000
 
 CMD ["node", "src/server.js"]
