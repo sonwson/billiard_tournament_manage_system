@@ -9,6 +9,7 @@ const playerValidation = require('./player.validation');
 const router = express.Router();
 
 router.get('/', validate(playerValidation.listPlayersSchema), playerController.listPlayers);
+router.get('/manageable', authMiddleware, requireRole(...ADMIN_ROLES), validate(playerValidation.listPlayersSchema), playerController.listManageablePlayers);
 router.post('/bulk', authMiddleware, requireRole(...ADMIN_ROLES), validate(playerValidation.bulkCreatePlayersSchema), playerController.bulkCreatePlayers);
 router.patch('/me', authMiddleware, validate(playerValidation.updateMyPlayerSchema), playerController.updateMyPlayer);
 router.delete('/:id', authMiddleware, requireRole(...ADMIN_ROLES), validate(playerValidation.deletePlayerSchema), playerController.deletePlayerPermanently);

@@ -24,6 +24,9 @@ function AdminRegistrationsPage() {
   const [directEntryForm, setDirectEntryForm] = useState({
     playerIds: [],
   })
+  const [existingPlayerKeyword, setExistingPlayerKeyword] = useState('')
+  const [existingPlayerSkillLevel, setExistingPlayerSkillLevel] = useState('')
+  const [existingPlayerScope, setExistingPlayerScope] = useState('managed')
   const [quickCreateForm, setQuickCreateForm] = useState({
     displayName: '',
     phone: '',
@@ -38,7 +41,19 @@ function AdminRegistrationsPage() {
     error: tournamentsError,
   } = useAsyncData(tournamentsLoader)
 
-  const playersLoader = useCallback(() => playerService.list({ limit: 200 }), [])
+  const playersLoader = useCallback(() => {
+    const filters = {
+      limit: 500,
+      keyword: existingPlayerKeyword.trim() || undefined,
+      skillLevel: existingPlayerSkillLevel || undefined,
+    }
+
+    if (existingPlayerScope === 'all_participated') {
+      return playerService.list({ ...filters, participated: true })
+    }
+
+    return playerService.listManageable(filters)
+  }, [existingPlayerKeyword, existingPlayerSkillLevel, existingPlayerScope])
   const { data: players } = useAsyncData(playersLoader)
 
   const registrationsLoader = useCallback(async () => {
@@ -361,6 +376,52 @@ function AdminRegistrationsPage() {
                   </div>
                 </div>
 
+                <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 lg:grid-cols-[minmax(0,1fr)_220px_280px]">
+                  <label className="block">
+                    <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{t(locale, 'adminRegistrations.filterByName')}</span>
+                    <input
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 placeholder:text-slate-400"
+                      value={existingPlayerKeyword}
+                      onChange={(event) => setExistingPlayerKeyword(event.target.value)}
+                      placeholder={t(locale, 'adminRegistrations.searchPlayerPlaceholder')}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{t(locale, 'adminRegistrations.filterBySkill')}</span>
+                    <select
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700"
+                      value={existingPlayerSkillLevel}
+                      onChange={(event) => setExistingPlayerSkillLevel(event.target.value)}
+                    >
+                      <option value="">{t(locale, 'adminRegistrations.allSkillLevels')}</option>
+                      {SKILL_LEVEL_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {t(locale, 'skillLevels.' + option.value)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-2 block text-xs font-bold uppercase tracking-[0.18em] text-slate-400">{t(locale, 'adminRegistrations.filterByHistory')}</span>
+                    <select
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700"
+                      value={existingPlayerScope}
+                      onChange={(event) => setExistingPlayerScope(event.target.value)}
+                    >
+                      <option value="managed">{t(locale, 'adminRegistrations.historyManaged')}</option>
+                      <option value="all_participated">{t(locale, 'adminRegistrations.historyAllParticipated')}</option>
+                    </select>
+                  </label>
+
+                  <p className="lg:col-span-3 text-sm text-slate-500">
+                    {existingPlayerScope === 'managed'
+                      ? t(locale, 'adminRegistrations.managedPlayersHint')
+                      : t(locale, 'adminRegistrations.allParticipatedPlayersHint')}
+                  </p>
+                </div>
+
                 <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
                   <div className="rounded-2xl border border-slate-200 bg-white p-3">
                     <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
@@ -406,7 +467,7 @@ function AdminRegistrationsPage() {
                       className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0F172A] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#14213D] disabled:opacity-60"
                     >
                       {addingPlayer ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                      Add Selected Players
+                      {t(locale, 'adminRegistrations.addSelectedPlayers')}
                     </button>
                   </div>
                 </div>

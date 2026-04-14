@@ -17,6 +17,11 @@ const listPlayers = asyncHandler(async (req, res) => {
   return successResponse(res, result.items, result.meta);
 });
 
+const listManageablePlayers = asyncHandler(async (req, res) => {
+  const result = await playerService.listManageablePlayers(req.query, req.user);
+  return successResponse(res, result.items, result.meta);
+});
+
 const getPlayerById = asyncHandler(async (req, res) => {
   const result = await playerService.getPlayerById(req.params.id);
   return successResponse(res, result);
@@ -41,6 +46,7 @@ module.exports = {
   createPlayer,
   bulkCreatePlayers,
   listPlayers,
+  listManageablePlayers,
   getPlayerById,
   updatePlayer,
   updateMyPlayer,

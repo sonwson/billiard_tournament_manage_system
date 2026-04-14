@@ -6,7 +6,28 @@ const playerRepository = require('./player.repository');
 const rankingRepository = require('../rankings/ranking.repository');
 const userRepository = require('../users/user.repository');
 const registrationRepository = require('../registrations/registration.repository');
-const { isSuperAdminRole } = require('../../common/constants/roles');
+const { ROLES, isSuperAdminRole } = require('../../common/constants/roles');
+const tournamentRepository = require('../tournaments/tournament.repository');
+
+function buildPlayerFilter(query) {
+  const filter = {};
+
+  if (query.club) filter.club = query.club;
+  if (query.city) filter.city = query.city;
+  if (query.status) filter.status = query.status;
+  if (query.skillLevel) filter.skillLevel = query.skillLevel;
+  if (query.keyword) {
+    filter.$or = [
+      { displayName: { $regex: query.keyword, $options: 'i' } },
+      { club: { $regex: query.keyword, $options: 'i' } },
+      { city: { $regex: query.keyword, $options: 'i' } },
+      { email: { $regex: query.keyword, $options: 'i' } },
+      { phone: { $regex: query.keyword, $options: 'i' } },
+    ];
+  }
+
+  return filter;
+}
 
 async function createPlayer(payload, actor) {
   const existingPlayer = payload.userId
@@ -54,23 +75,50 @@ async function createPlayersBulk(payload, actor) {
 
 async function listPlayers(query) {
   const { page, limit, skip } = parsePagination(query);
-  const filter = {};
+  const filter = buildPlayerFilter(query);
   const onlyParticipated = query.participated === true || query.participated === 'true';
 
-  if (query.club) filter.club = query.club;
-  if (query.city) filter.city = query.city;
-  if (query.status) filter.status = query.status;
-  if (query.keyword) {
-    filter.$or = [
-      { displayName: { $regex: query.keyword, $options: 'i' } },
-      { club: { $regex: query.keyword, $options: 'i' } },
-      { city: { $regex: query.keyword, $options: 'i' } },
-    ];
-  }
   if (onlyParticipated) {
     const playerIds = await registrationRepository.findDistinctPlayerIds({});
     filter._id = { $in: playerIds };
   }
+
+  const [items, total] = await Promise.all([
+    playerRepository.findMany(filter, { skip, limit }),
+    playerRepository.countDocuments(filter),
+  ]);
+
+  return {
+    items,
+    meta: { page, limit, total },
+  };
+}
+
+async function listManageablePlayers(query, actor) {
+  const { page, limit, skip } = parsePagination(query, { defaultLimit: 20, maxLimit: 500 });
+  const filter = buildPlayerFilter(query);
+
+  const tournamentFilter = actor.role === ROLES.SUPER_ADMIN
+    ? {}
+    : {
+      $or: [
+        { ownerAdminId: actor.sub },
+        { managerAdminIds: actor.sub },
+      ],
+    };
+
+  const tournaments = await tournamentRepository.findMany(tournamentFilter, { skip: 0, limit: 5000, sort: { createdAt: -1 } });
+  const tournamentIds = tournaments.map((tournament) => tournament._id);
+
+  if (!tournamentIds.length) {
+    return {
+      items: [],
+      meta: { page, limit, total: 0 },
+    };
+  }
+
+  const playerIds = await registrationRepository.findDistinctPlayerIds({ tournamentId: { $in: tournamentIds } });
+  filter._id = { $in: playerIds };
 
   const [items, total] = await Promise.all([
     playerRepository.findMany(filter, { skip, limit }),
@@ -147,6 +195,7 @@ module.exports = {
   createPlayer,
   createPlayersBulk,
   listPlayers,
+  listManageablePlayers,
   getPlayerById,
   updatePlayer,
   updateMyPlayer,

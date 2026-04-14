@@ -191,6 +191,7 @@ export const tournamentService = {
     const response = await apiRequest(`/tournaments/${eventId}/player-stats`)
     return response.data || {}
   },
+
   async create(payload) {
     const response = await apiRequest('/tournaments', {
       method: 'POST',
@@ -387,6 +388,47 @@ export const matchService = {
 }
 
 export const playerService = {
+  async listManageable(filters = {}) {
+    const searchParams = new URLSearchParams()
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        searchParams.set(key, value)
+      }
+    })
+
+    const queryString = searchParams.toString()
+    const [playerResponse, rankingResponse] = await Promise.all([
+      apiRequest(`/players/manageable${queryString ? `?${queryString}` : ''}`),
+      apiRequest('/rankings'),
+    ])
+
+    const rankingMap = new Map(
+      (rankingResponse.data || []).map((item, index) => {
+        const normalized = normalizePlayer(item, index)
+        return [normalized.id, normalized]
+      }),
+    )
+
+    return (playerResponse.data || []).map((player, index) => {
+      const normalizedPlayer = normalizePlayer(player, index)
+      const rankingSnapshot = rankingMap.get(normalizedPlayer.id)
+
+      if (!rankingSnapshot) {
+        return normalizedPlayer
+      }
+
+      return {
+        ...normalizedPlayer,
+        ranking: rankingSnapshot.ranking,
+        points: rankingSnapshot.points,
+        prizeMoney: rankingSnapshot.prizeMoney,
+        wins: rankingSnapshot.wins,
+        titles: rankingSnapshot.titles,
+      }
+    })
+  },
+
   async list(filters = {}) {
     const searchParams = new URLSearchParams()
 
