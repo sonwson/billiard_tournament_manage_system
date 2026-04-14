@@ -92,7 +92,7 @@ jobs:
       - name: Build frontend Docker image
         run: |
           docker build \
-            --build-arg VITE_API_BASE_URL=http://43.207.119.109:5000/api/v1 \
+            --build-arg VITE_API_BASE_URL=http://43.207.119.109:5000 \
             -t frontend-image .
 
       - name: Login to Docker Hub
