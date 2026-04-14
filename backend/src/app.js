@@ -16,6 +16,12 @@ const routes = require('./routes');
 
 const app = express();
 
+app.use(cors({
+  origin: '*', // Cho phép mọi nguồn truy cập
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 function normalizeOrigin(origin = '') {
   return String(origin)
     .trim()
