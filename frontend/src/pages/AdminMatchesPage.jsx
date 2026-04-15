@@ -450,10 +450,20 @@ function AdminMatchesPage() {
                       </div>
 
                       <div className="grid min-w-0 content-start gap-3">
-                        <div className="grid gap-3 2xl:grid-cols-[minmax(0,1fr)_minmax(220px,0.85fr)]">
+                        <div className="grid gap-3">
                           <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
-                            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">{t(locale, 'adminMatches.schedule')}</p>
-                            <div className="mt-3 grid gap-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">{t(locale, 'adminMatches.schedule')}</p>
+                              <button
+                                type="button"
+                                disabled={busyMatchId === match.id}
+                                onClick={() => handleScheduleSave(match)}
+                                className="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                              >
+                                {t(locale, 'adminMatches.saveSchedule')}
+                              </button>
+                            </div>
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
                               <input
                                 type="datetime-local"
                                 value={scheduleDraft.scheduledAt}
@@ -472,33 +482,26 @@ function AdminMatchesPage() {
                                   </option>
                                 ))}
                               </select>
-                              <button
-                                type="button"
-                                disabled={busyMatchId === match.id}
-                                onClick={() => handleScheduleSave(match)}
-                                className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
-                              >
-                                {t(locale, 'adminMatches.saveSchedule')}
-                              </button>
                             </div>
                           </div>
 
                           <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
-                            <div className="flex items-start justify-between gap-3">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                               <div className="min-w-0">
                                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">{t(locale, 'adminMatches.tableQr')}</p>
-                                <p className="mt-2 text-sm font-semibold text-slate-700">{match.rawTableNo || t(locale, 'adminMatches.assignTableFirst')}</p>
+                                <p className="mt-2 text-base font-semibold text-slate-700">{match.rawTableNo || t(locale, 'adminMatches.assignTableFirst')}</p>
+                                <p className="mt-1 text-xs leading-5 text-slate-500">{t(locale, 'adminMatches.tableQrDescription')}</p>
                               </div>
                               {tableQrPayload && !isCompleted ? (
-                                <img src={tableQrPayload.qrCodeDataUrl} alt="Table QR" className="h-24 w-24 rounded-xl border border-slate-200" />
+                                <img src={tableQrPayload.qrCodeDataUrl} alt="Table QR" className="h-28 w-28 self-start rounded-xl border border-slate-200 p-1" />
                               ) : null}
                             </div>
-                            <div className="mt-3 grid gap-3">
+                            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                               <button
                                 type="button"
                                 disabled={busyMatchId === match.id || !match.rawTableNo || isCompleted}
                                 onClick={() => handleQrGenerate(match)}
-                                className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                                className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
                               >
                                 {t(locale, 'adminMatches.generateTableQr')}
                               </button>
@@ -507,15 +510,11 @@ function AdminMatchesPage() {
                                   href={tableQrPayload.scoreUrl}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="inline-flex items-center justify-center rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                                  className="inline-flex items-center justify-center rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
                                 >
                                   {t(locale, 'adminMatches.openTableScorePage')}
                                 </a>
-                              ) : (
-                                <p className="text-xs leading-5 text-slate-500">
-                                  {t(locale, 'adminMatches.tableQrDescription')}
-                                </p>
-                              )}
+                              ) : null}
                             </div>
                           </div>
                         </div>
@@ -530,15 +529,9 @@ function AdminMatchesPage() {
                           {isCompleted ? t(locale, 'adminMatches.saveScoreCorrection') : t(locale, 'adminMatches.finishMatch')}
                         </button>
 
-                        {!isCompleted ? (
-                          <p className="text-xs leading-5 text-slate-500">
-                            {t(locale, 'adminMatches.liveScoreHint')}
-                          </p>
-                        ) : (
-                          <p className="text-xs leading-5 text-slate-500">
-                            {t(locale, 'adminMatches.correctionHint')}
-                          </p>
-                        )}
+                        <p className="rounded-2xl bg-slate-100 px-4 py-3 text-xs leading-5 text-slate-500">
+                          {isCompleted ? t(locale, 'adminMatches.correctionHint') : t(locale, 'adminMatches.liveScoreHint')}
+                        </p>
                       </div>
                     </article>
                   )
