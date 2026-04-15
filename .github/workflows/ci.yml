@@ -92,7 +92,7 @@ jobs:
       - name: Build frontend Docker image
         run: |
           docker build \
-            --build-arg VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }} \
+            --build-arg VITE_API_BASE_URL=/api/v1 \
             -t frontend-image .
 
       - name: Login to Docker Hub
